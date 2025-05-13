@@ -13,7 +13,9 @@ const BerandaKepsek = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:2000/api/dashboard");
+        const res = await axios.get(
+          "http://localhost:2000/api/dashboard?role=kepsek"
+        );
 
         // Pastikan bahwa data rekap sudah ada dalam response
         if (res.data) {
