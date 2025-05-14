@@ -18,9 +18,36 @@ const TambahSuratKeluar = () => {
   const [noPaket, setNoPaket] = useState("");
   const [file, setFile] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      return;
+    }
+    setFile(selectedFile);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      return;
+    }
+    setFile(droppedFile);
   };
 
   const handleSubmit = async (e) => {
@@ -34,7 +61,9 @@ const TambahSuratKeluar = () => {
     formData.append("perihal", perihal);
     formData.append("noPetunjuk", noPetunjuk);
     formData.append("noPaket", noPaket);
-    formData.append("fileUrl", file);
+    if (file) {
+      formData.append("fileUrl", file);
+    }
 
     try {
       const response = await fetch("http://localhost:2000/api/surat-keluar", {
@@ -169,20 +198,33 @@ const TambahSuratKeluar = () => {
 
               <div className="flex items-center gap-4">
                 <label className="font-medium w-64">Unggah File</label>
-                <label
-                  htmlFor="fileInput"
-                  className="flex-1 p-6 rounded-md text-center bg-white text-black shadow cursor-pointer"
+                <div
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`flex-1 p-6 rounded-md text-center bg-white text-black shadow cursor-pointer transition-all duration-200 ${
+                    isDragging
+                      ? "border-2 border-dashed border-blue-500 bg-blue-50"
+                      : "border border-gray-300"
+                  }`}
                 >
-                  {file ? file.name : "Pilih file atau seret file ke kolom"}
-                </label>
-                <input
-                  type="file"
-                  name="file"
-                  id="fileInput"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
+                  <label htmlFor="fileInput" className="block cursor-pointer">
+                    {file
+                      ? file.name
+                      : "Pilih file atau seret ke sini (max 2MB)"}
+                  </label>
+                  <input
+                    type="file"
+                    id="fileInput"
+                    className="hidden"
+                    onChange={handleFileChange}
+                    accept=".pdf,.doc,.docx,.jpg,.png"
+                  />
+                </div>
               </div>
+              {errorMessage && (
+                <div className="mt-2 text-sm text-red-500">{errorMessage}</div>
+              )}
 
               <button
                 type="submit"

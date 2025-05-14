@@ -79,7 +79,9 @@ const Detailsuratmasuk = () => {
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Disposisi</h3>
-                <p>{surat.disposisi?.trim() ? surat.disposisi : "-"}</p>
+                <p>
+                  {surat.disposisikanKe?.trim() ? surat.disposisikanKe : "-"}
+                </p>
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Isi Disposisi</h3>

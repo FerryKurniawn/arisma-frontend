@@ -19,6 +19,8 @@ const EditSuratKeluar = () => {
   const [noPaket, setNoPaket] = useState("");
   const [originalData, setOriginalData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const fetchSurat = async () => {
@@ -71,7 +73,32 @@ const EditSuratKeluar = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      return;
+    }
+    setFile(selectedFile);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      return;
+    }
+    setFile(droppedFile);
   };
 
   const handleSubmit = async (e) => {
@@ -181,23 +208,36 @@ const EditSuratKeluar = () => {
               value={noPaket}
               onChange={(e) => setNoPaket(e.target.value)}
             />
-            <div className="flex items-center">
-              <label className="font-medium w-[185px]">Unggah File</label>
-              <label
-                htmlFor="fileInput"
-                className="flex-1 p-4 rounded-md text-center bg-white text-black shadow cursor-pointer"
-              >
-                {file ? file.name : "Pilih file atau seret file ke kolom"}
-              </label>
-              <input
-                type="file"
-                id="fileInput"
-                className="hidden"
-                onChange={handleFileChange}
-                required
-              />
-            </div>
 
+            {/* Drag and Drop File Upload */}
+            <div className="flex ">
+              <label className="font-semibold mr-20">Unggah File Baru</label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex items-center p-4 w-[470px] rounded-md text-center bg-white shadow cursor-pointer transition-all duration-200 ${
+                  isDragging
+                    ? "border-2 border-dashed border-blue-500 bg-blue-50"
+                    : "border border-gray-300"
+                }`}
+              >
+                <label htmlFor="fileInput" className="block cursor-pointer">
+                  Unggah file atau seret ke sini (maks 2MB){" "}
+                  {file ? `- ${file.name}` : ""}
+                </label>
+                <input
+                  type="file"
+                  id="fileInput"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                />
+              </div>
+            </div>
+            {errorMessage && (
+              <div className="mt-2 text-sm text-red-500">{errorMessage}</div>
+            )}
             {!file && originalData?.fileUrl && (
               <div className="mt-2 text-sm text-gray-700">
                 <p>
