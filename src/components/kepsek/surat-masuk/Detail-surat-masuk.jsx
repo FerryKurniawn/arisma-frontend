@@ -42,7 +42,7 @@ const DetailSuratMasuk = () => {
     const fetchSurat = async () => {
       try {
         const response = await fetch(
-          `http://localhost:2000/api/surat-masuk/${id}`
+          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
         );
         const data = await response.json();
 
@@ -67,7 +67,9 @@ const DetailSuratMasuk = () => {
 
     const fetchAdmins = async () => {
       try {
-        const res = await fetch("http://localhost:2000/api/users?role=admin");
+        const res = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/users?role=admin`
+        );
         const data = await res.json();
         setAdminList(data);
       } catch (error) {

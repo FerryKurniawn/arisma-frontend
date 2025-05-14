@@ -104,7 +104,7 @@ const DetailDisposisi = () => {
                 <div className="mb-4 grid grid-cols-3 gap-4">
                   <h3 className="font-semibold">File Surat</h3>
                   <a
-                    href={`http://localhost:2000${surat.fileUrl}`}
+                    href={`${import.meta.env.VITE_API_URL}${surat.fileUrl}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 underline col-span-2"

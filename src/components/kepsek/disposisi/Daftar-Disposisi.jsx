@@ -21,7 +21,7 @@ const DaftarDisposisi = () => {
   };
 
   const fetchData = () => {
-    fetch("http://localhost:2000/api/surat-masuk")
+    fetch(`${import.meta.env.VITE_API_URL}/api/surat-masuk`)
       .then((res) => res.json())
       .then((data) => {
         const validData = data.filter(isDataValid); // Hanya surat dengan tenggatWaktu
@@ -116,8 +116,13 @@ const DaftarDisposisi = () => {
                 </div>
               </div>
               <button
-                className="bg-[#34542C] hover:bg-gray-400 text-white px-6 py-2 text-sm rounded-md"
+                className={`px-6 py-2 text-sm rounded-md text-white transition-colors duration-200 ${
+                  searchTerm.trim()
+                    ? "bg-[#34542C] hover:bg-gray-600"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
                 onClick={handleSearch}
+                disabled={!searchTerm.trim()}
               >
                 Cari
               </button>

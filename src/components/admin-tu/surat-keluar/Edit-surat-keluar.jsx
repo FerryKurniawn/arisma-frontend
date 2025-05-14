@@ -116,7 +116,7 @@ const EditSuratKeluar = () => {
       if (file) formData.append("fileUrl", file);
 
       const response = await fetch(
-        `http://localhost:2000/api/surat-keluar/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`,
         {
           method: "PUT",
           body: formData,

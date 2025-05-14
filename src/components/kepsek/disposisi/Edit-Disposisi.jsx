@@ -92,7 +92,7 @@ const EditDisposisi = () => {
       if (file) formData.append("fileUrl", file);
 
       const response = await fetch(
-        `http://localhost:2000/api/surat-masuk/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
         {
           method: "PUT",
           body: formData,
