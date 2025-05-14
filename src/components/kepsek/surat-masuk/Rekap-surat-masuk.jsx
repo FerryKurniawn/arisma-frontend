@@ -14,8 +14,13 @@ const SuratMasuk = () => {
       try {
         const response = await fetch("http://localhost:2000/api/surat-masuk");
         const data = await response.json();
-        setSuratMasuk(data);
-        setFilteredSurat(data);
+
+        if (Array.isArray(data)) {
+          setSuratMasuk(data);
+          setFilteredSurat(data);
+        } else {
+          console.error("Data bukan array:", data);
+        }
       } catch (error) {
         console.error("Error fetching surat masuk:", error);
       }
@@ -33,7 +38,7 @@ const SuratMasuk = () => {
         surat.alamatPengirim,
         surat.tanggalTerima,
         surat.sifatSurat,
-        surat.disposisi,
+        surat.disposisikanKe,
         surat.isiDisposisi,
       ]
         .filter(Boolean)
@@ -43,8 +48,9 @@ const SuratMasuk = () => {
   };
 
   const formatTanggal = (dateString) => {
+    if (!dateString) return "-";
     const date = new Date(dateString);
-    return date.toISOString().split("T")[0];
+    return isNaN(date.getTime()) ? "-" : date.toISOString().split("T")[0];
   };
 
   const handleView = (id) => {
@@ -82,7 +88,7 @@ const SuratMasuk = () => {
                   className="w-full border rounded-md py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
                 <div className="absolute right-3 top-2.5 text-gray-400">
-                  <img src="/search.png" width="15px" />
+                  <img src="/search.png" width="15px" alt="search" />
                 </div>
               </div>
               <button
@@ -132,20 +138,20 @@ const SuratMasuk = () => {
                           index % 2 === 0 ? "rgba(217,217,217,0.5)" : "white",
                       }}
                     >
-                      <td className="p-3">{surat.noSurat}</td>
-                      <td className="p-3">{surat.perihal}</td>
+                      <td className="p-3">{surat.noSurat || "-"}</td>
+                      <td className="p-3">{surat.perihal || "-"}</td>
                       <td className="p-3 max-w-[200px] truncate">
-                        {surat.alamatPengirim}
+                        {surat.alamatPengirim || "-"}
                       </td>
                       <td className="p-3">
                         {formatTanggal(surat.tanggalTerima)}
                       </td>
                       <td className="p-3">
-                        {surat.sifatSurat == "SangatSegera"
+                        {surat.sifatSurat === "SangatSegera"
                           ? "Sangat Segera"
-                          : surat.sifatSurat}
+                          : surat.sifatSurat || "-"}
                       </td>
-                      <td className="p-3">{surat.disposisi || "-"}</td>
+                      <td className="p-3">{surat.disposisikanKe || "-"}</td>
                       <td className="p-3 max-w-[200px] truncate">
                         {surat.isiDisposisi || "-"}
                       </td>

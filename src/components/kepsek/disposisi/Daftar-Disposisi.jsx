@@ -44,7 +44,8 @@ const DaftarDisposisi = () => {
         surat.alamatPengirim.toLowerCase().includes(search) ||
         surat.tanggalTerima.toLowerCase().includes(search) ||
         (surat.sifatSurat && surat.sifatSurat.toLowerCase().includes(search)) ||
-        (surat.disposisi && surat.disposisi.toLowerCase().includes(search)) ||
+        (surat.disposisikanKe &&
+          surat.disposisikanKe.toLowerCase().includes(search)) ||
         (surat.isiDisposisi &&
           surat.isiDisposisi.toLowerCase().includes(search))
       );
@@ -179,7 +180,7 @@ const DaftarDisposisi = () => {
                           ? "Sangat Segera"
                           : surat.sifatSurat}
                       </td>
-                      <td className="p-3">{surat.disposisi || "-"}</td>
+                      <td className="p-3">{surat.disposisikanKe || "-"}</td>
 
                       <td className="p-3 max-w-[200px] truncate">
                         {surat.isiDisposisi || "-"}

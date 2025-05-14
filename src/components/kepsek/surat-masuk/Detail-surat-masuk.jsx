@@ -14,7 +14,7 @@ const DetailSuratMasuk = () => {
     alamatPengirim: "",
     tanggalTerima: "",
     sifatSurat: "",
-    isiDisposisi: "",
+    isiDisposisi: "", // Default empty string to avoid null issues
     fileUrl: "",
     disposisikanKe: "",
     tenggatWaktu: "",
@@ -25,7 +25,12 @@ const DetailSuratMasuk = () => {
 
   // Fungsi untuk mengubah format tanggal menjadi DD-MM-YYYY
   const formatTanggal = (tanggal) => {
+    if (!tanggal) return ""; // Jika tanggal tidak ada
     const date = new Date(tanggal);
+
+    // Pastikan tanggal valid
+    if (isNaN(date)) return "Invalid Date";
+
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
@@ -41,18 +46,19 @@ const DetailSuratMasuk = () => {
         );
         const data = await response.json();
 
+        // Debugging untuk memeriksa apakah data surat benar
+        console.log("Fetched Surat:", data);
+
         setSurat({
           noSurat: data.noSurat,
           perihal: data.perihal,
           alamatPengirim: data.alamatPengirim,
-          tanggalTerima: data.tanggalTerima
-            ? formatTanggal(data.tanggalTerima)
-            : "",
+          tanggalTerima: formatTanggal(data.tanggalTerima), // Memformat tanggal
           sifatSurat: data.sifatSurat,
-          isiDisposisi: data.isiDisposisi || "",
+          isiDisposisi: data.isiDisposisi || "", // Pastikan data.isiDisposisi ada di API dan diganti jika null
           fileUrl: data.fileUrl,
-          disposisikanKe: "",
-          tenggatWaktu: "",
+          disposisikanKe: data.disposisikanKe || "", // Pastikan nilai disposisi tidak null
+          tenggatWaktu: formatTanggal(data.tenggatWaktu), // Memformat tenggatWaktu
         });
       } catch (error) {
         console.error("Error fetching surat masuk:", error);
@@ -74,6 +80,7 @@ const DetailSuratMasuk = () => {
   }, [id]);
 
   const handleChange = (e) => {
+    console.log("Input changed:", e.target.name, e.target.value); // Debugging perubahan input
     setSurat({ ...surat, [e.target.name]: e.target.value });
   };
 
@@ -95,7 +102,7 @@ const DetailSuratMasuk = () => {
         body: JSON.stringify({
           disposisi: surat.disposisikanKe,
           isiDisposisi: surat.isiDisposisi,
-          tenggatWaktu: surat.tenggatWaktu,
+          tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(), // Mengubah tanggal ke ISO format
         }),
       });
 
@@ -158,7 +165,7 @@ const DetailSuratMasuk = () => {
             <div className="mb-4 grid grid-cols-3 gap-4">
               <h3 className="font-semibold">Sifat Surat</h3>
               <p className="col-span-2">
-                {surat.sifatSurat == "SangatSegera"
+                {surat.sifatSurat === "SangatSegera"
                   ? "Sangat Segera"
                   : surat.sifatSurat}
               </p>
@@ -167,7 +174,7 @@ const DetailSuratMasuk = () => {
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">File Lampiran</h3>
                 <a
-                  href={`http://localhost:2000${surat.fileUrl}`}
+                  href={surat.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="col-span-2 text-blue-500 underline"
@@ -203,7 +210,7 @@ const DetailSuratMasuk = () => {
                 type="text"
                 name="isiDisposisi"
                 className="col-span-2 p-2 border rounded"
-                value={surat.isiDisposisi}
+                value={surat.isiDisposisi || ""} // Handle null case
                 onChange={handleChange}
                 placeholder="Tulis isi disposisi..."
               />

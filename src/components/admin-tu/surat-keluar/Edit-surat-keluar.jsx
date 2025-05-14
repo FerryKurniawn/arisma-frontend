@@ -37,6 +37,7 @@ const EditSuratKeluar = () => {
         setNoPetunjuk(data.noPetunjuk);
         setNoPaket(data.noPaket);
 
+        // Pastikan fileUrl ada pada originalData
         setOriginalData({
           noSurat: data.noSurat,
           noBerkas: data.noBerkas,
@@ -45,6 +46,7 @@ const EditSuratKeluar = () => {
           perihal: data.perihal,
           noPetunjuk: data.noPetunjuk,
           noPaket: data.noPaket,
+          fileUrl: data.fileUrl, // Menyimpan URL file lama
         });
       } catch (error) {
         console.error("Error fetching surat keluar:", error);
@@ -179,13 +181,37 @@ const EditSuratKeluar = () => {
               value={noPaket}
               onChange={(e) => setNoPaket(e.target.value)}
             />
-            <InputForm
-              label="Unggah File Baru"
-              type="file"
-              onChange={handleFileChange}
-            />
-            {file && (
-              <p className="text-sm text-gray-600 mt-1">File: {file.name}</p>
+            <div className="flex items-center">
+              <label className="font-medium w-[185px]">Unggah File</label>
+              <label
+                htmlFor="fileInput"
+                className="flex-1 p-4 rounded-md text-center bg-white text-black shadow cursor-pointer"
+              >
+                {file ? file.name : "Pilih file atau seret file ke kolom"}
+              </label>
+              <input
+                type="file"
+                id="fileInput"
+                className="hidden"
+                onChange={handleFileChange}
+                required
+              />
+            </div>
+
+            {!file && originalData?.fileUrl && (
+              <div className="mt-2 text-sm text-gray-700">
+                <p>
+                  File sebelumnya:{" "}
+                  <a
+                    href={originalData.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Lihat File Lama
+                  </a>
+                </p>
+              </div>
             )}
 
             <button

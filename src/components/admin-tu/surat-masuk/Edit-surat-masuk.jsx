@@ -39,6 +39,7 @@ const EditSuratMasuk = () => {
           alamatPengirim: data.alamatPengirim,
           tanggalTerima: data.tanggalTerima.slice(0, 10),
           sifatSurat: data.sifatSurat,
+          fileUrl: data.fileUrl, // simpan file lama
         });
       } catch (error) {
         console.error("Error fetching surat masuk:", error);
@@ -151,26 +152,52 @@ const EditSuratMasuk = () => {
               value={tanggalTerima}
               onChange={(e) => setTanggalTerima(e.target.value)}
             />
-            <InputForm
-              label="Sifat Surat"
-              isSelect={true}
-              value={sifatSurat}
-              onChange={(e) => setSifatSurat(e.target.value)}
-              options={[
-                { value: "", label: "Pilih" },
-                { value: "SangatSegera", label: "Sangat Segera" },
-                { value: "Segera", label: "Segera" },
-                { value: "Biasa", label: "Biasa" },
-              ]}
-            />
+            <div className="flex items-center mb-4">
+              <label className="font-medium mr-[110px]">Sifat Surat</label>
+              <select
+                value={sifatSurat}
+                onChange={(e) => setSifatSurat(e.target.value)}
+                className="flex-1 p-3 rounded-md bg-white text-black shadow focus:outline-none focus:ring-2 focus:ring-gray-300"
+                required
+              >
+                <option value="">Pilih</option>
+                <option value="SangatSegera">Sangat Segera</option>
+                <option value="Segera">Segera</option>
+                <option value="Biasa">Biasa</option>
+              </select>
+            </div>
 
-            <InputForm
-              label="Unggah File Baru"
-              type="file"
-              onChange={handleFileChange}
-            />
-            {file && (
-              <p className="text-sm text-gray-600 mt-1">File: {file.name}</p>
+            <div className="flex items-center">
+              <label className="font-medium w-[185px]">Unggah File</label>
+              <label
+                htmlFor="fileInput"
+                className="flex-1 p-4 rounded-md text-center bg-white text-black shadow cursor-pointer"
+              >
+                {file ? file.name : "Pilih file atau seret file ke kolom"}
+              </label>
+              <input
+                type="file"
+                id="fileInput"
+                className="hidden"
+                onChange={handleFileChange}
+                required
+              />
+            </div>
+
+            {!file && originalData?.fileUrl && (
+              <div className="mt-2 text-sm text-gray-700">
+                <p>
+                  File sebelumnya:{" "}
+                  <a
+                    href={originalData.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    Lihat File Lama
+                  </a>
+                </p>
+              </div>
             )}
 
             <button

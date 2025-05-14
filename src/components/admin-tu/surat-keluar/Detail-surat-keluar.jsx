@@ -91,7 +91,7 @@ const DetailSuratKeluar = () => {
                 {surat.fileUrl ? (
                   surat.fileUrl.endsWith(".pdf") ? (
                     <iframe
-                      src={`http://localhost:2000${surat.fileUrl}`}
+                      src={surat.fileUrl}
                       title="File Surat"
                       width="100%"
                       height="500px"
@@ -99,7 +99,7 @@ const DetailSuratKeluar = () => {
                     ></iframe>
                   ) : (
                     <a
-                      href={`http://localhost:2000${surat.fileUrl}`}
+                      href={surat.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-blue-600 underline"
