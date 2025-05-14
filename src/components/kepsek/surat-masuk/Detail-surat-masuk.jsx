@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Kepsekvigasi";
 import Logout from "../../Logout";
-import SentAlert from "../../SentAlert"; // Import SentAlert
+import SentAlert from "../../SentAlert";
 
 const DetailSuratMasuk = () => {
   const navigate = useNavigate();
@@ -14,7 +14,7 @@ const DetailSuratMasuk = () => {
     alamatPengirim: "",
     tanggalTerima: "",
     sifatSurat: "",
-    isiDisposisi: "", // Default empty string to avoid null issues
+    isiDisposisi: "",
     fileUrl: "",
     disposisikanKe: "",
     tenggatWaktu: "",
@@ -22,13 +22,11 @@ const DetailSuratMasuk = () => {
 
   const [adminList, setAdminList] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  // Fungsi untuk mengubah format tanggal menjadi DD-MM-YYYY
   const formatTanggal = (tanggal) => {
-    if (!tanggal) return ""; // Jika tanggal tidak ada
+    if (!tanggal) return "";
     const date = new Date(tanggal);
-
-    // Pastikan tanggal valid
     if (isNaN(date)) return "Invalid Date";
 
     const day = String(date.getDate()).padStart(2, "0");
@@ -45,20 +43,16 @@ const DetailSuratMasuk = () => {
           `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
         );
         const data = await response.json();
-
-        // Debugging untuk memeriksa apakah data surat benar
-        console.log("Fetched Surat:", data);
-
         setSurat({
           noSurat: data.noSurat,
           perihal: data.perihal,
           alamatPengirim: data.alamatPengirim,
-          tanggalTerima: formatTanggal(data.tanggalTerima), // Memformat tanggal
+          tanggalTerima: formatTanggal(data.tanggalTerima),
           sifatSurat: data.sifatSurat,
-          isiDisposisi: data.isiDisposisi || "", // Pastikan data.isiDisposisi ada di API dan diganti jika null
+          isiDisposisi: data.isiDisposisi || "",
           fileUrl: data.fileUrl,
-          disposisikanKe: data.disposisikanKe || "", // Pastikan nilai disposisi tidak null
-          tenggatWaktu: formatTanggal(data.tenggatWaktu), // Memformat tenggatWaktu
+          disposisikanKe: data.disposisikanKe || "",
+          tenggatWaktu: data.tenggatWaktu?.split("T")[0] || "",
         });
       } catch (error) {
         console.error("Error fetching surat masuk:", error);
@@ -82,16 +76,15 @@ const DetailSuratMasuk = () => {
   }, [id]);
 
   const handleChange = (e) => {
-    console.log("Input changed:", e.target.name, e.target.value); // Debugging perubahan input
+    setErrorMessage("");
     setSurat({ ...surat, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validasi form: Pastikan semua field yang wajib diisi ada isinya
     if (!surat.disposisikanKe || !surat.isiDisposisi || !surat.tenggatWaktu) {
-      alert("Semua field disposisi harus diisi.");
+      setErrorMessage("Semua field disposisi wajib diisi.");
       return;
     }
 
@@ -104,15 +97,15 @@ const DetailSuratMasuk = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            disposisi: surat.disposisikanKe,
+            disposisikanKe: surat.disposisikanKe,
             isiDisposisi: surat.isiDisposisi,
-            tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(), // Mengubah tanggal ke ISO format
+            tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(),
           }),
         }
       );
 
       if (res.ok) {
-        setShowSuccess(true); // Show success alert if successful
+        setShowSuccess(true);
       } else {
         alert("Gagal memperbarui surat disposisi.");
       }
@@ -124,7 +117,7 @@ const DetailSuratMasuk = () => {
 
   const handleCloseAlert = () => {
     setShowSuccess(false);
-    navigate("/kepsek/surat-masuk"); // Redirect after closing the alert
+    navigate("/kepsek/surat-masuk");
   };
 
   return (
@@ -184,7 +177,7 @@ const DetailSuratMasuk = () => {
                   rel="noopener noreferrer"
                   className="col-span-2 text-blue-500 underline"
                 >
-                  Lihat File
+                  Lihat file
                 </a>
               </div>
             )}
@@ -215,7 +208,7 @@ const DetailSuratMasuk = () => {
                 type="text"
                 name="isiDisposisi"
                 className="col-span-2 p-2 border rounded"
-                value={surat.isiDisposisi || ""} // Handle null case
+                value={surat.isiDisposisi}
                 onChange={handleChange}
                 placeholder="Tulis isi disposisi..."
               />
@@ -232,6 +225,12 @@ const DetailSuratMasuk = () => {
               />
             </div>
 
+            {errorMessage && (
+              <p className="text-red-600 font-medium mb-4 col-span-3">
+                {errorMessage}
+              </p>
+            )}
+
             <button
               onClick={handleSubmit}
               className="bg-[#34542C] py-3 px-8 text-white"
@@ -242,7 +241,6 @@ const DetailSuratMasuk = () => {
         </main>
       </div>
 
-      {/* Show success alert */}
       {showSuccess && <SentAlert onClose={handleCloseAlert} />}
     </div>
   );

@@ -87,19 +87,33 @@ const Detailsuratmasuk = () => {
                 <h3 className="font-semibold">Isi Disposisi</h3>
                 <p>{surat.isiDisposisi?.trim() ? surat.isiDisposisi : "-"}</p>
               </div>
-              {surat.fileUrl && (
-                <div className="mb-4 grid grid-cols-3 gap-4">
-                  <h3 className="font-semibold">File Surat</h3>
-                  <a
-                    href={surat.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-500 underline"
-                  >
-                    Lihat File
-                  </a>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">File Surat</h3>
+                <div className="col-span-2">
+                  {surat.fileUrl ? (
+                    surat.fileUrl.endsWith(".pdf") ? (
+                      <iframe
+                        src={surat.fileUrl}
+                        title="File Surat"
+                        width="100%"
+                        height="500px"
+                        className="border rounded"
+                      ></iframe>
+                    ) : (
+                      <a
+                        href={surat.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Lihat File
+                      </a>
+                    )
+                  ) : (
+                    <p className="text-gray-500">Tidak ada file terlampir</p>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             <p>Loading...</p>

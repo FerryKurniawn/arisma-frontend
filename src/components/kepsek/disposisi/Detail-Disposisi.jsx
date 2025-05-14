@@ -85,7 +85,7 @@ const DetailDisposisi = () => {
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Disposisikan Ke</h3>
                 <p className="col-span-2">
-                  {surat.disposisi?.trim() ? surat.disposisi : "-"}
+                  {surat.disposisikanKe?.trim() ? surat.disposisikanKe : "-"}
                 </p>
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">

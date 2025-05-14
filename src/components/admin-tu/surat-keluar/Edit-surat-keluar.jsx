@@ -39,7 +39,6 @@ const EditSuratKeluar = () => {
         setNoPetunjuk(data.noPetunjuk);
         setNoPaket(data.noPaket);
 
-        // Pastikan fileUrl ada pada originalData
         setOriginalData({
           noSurat: data.noSurat,
           noBerkas: data.noBerkas,
@@ -48,7 +47,7 @@ const EditSuratKeluar = () => {
           perihal: data.perihal,
           noPetunjuk: data.noPetunjuk,
           noPaket: data.noPaket,
-          fileUrl: data.fileUrl, // Menyimpan URL file lama
+          fileUrl: data.fileUrl,
         });
       } catch (error) {
         console.error("Error fetching surat keluar:", error);
@@ -74,11 +73,15 @@ const EditSuratKeluar = () => {
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
-    if (selectedFile && selectedFile.size > 2 * 1024 * 1024) {
-      setErrorMessage("Ukuran file maksimal 2MB.");
-      return;
+    if (selectedFile) {
+      if (selectedFile.size > 2 * 1024 * 1024) {
+        setErrorMessage("Ukuran file maksimal 2MB.");
+        setFile(null);
+      } else {
+        setErrorMessage("");
+        setFile(selectedFile);
+      }
     }
-    setFile(selectedFile);
   };
 
   const handleDragOver = (e) => {
@@ -93,12 +96,17 @@ const EditSuratKeluar = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
+
     const droppedFile = e.dataTransfer.files[0];
-    if (droppedFile && droppedFile.size > 2 * 1024 * 1024) {
-      setErrorMessage("Ukuran file maksimal 2MB.");
-      return;
+    if (droppedFile) {
+      if (droppedFile.size > 2 * 1024 * 1024) {
+        setErrorMessage("Ukuran file maksimal 2MB.");
+        setFile(null);
+      } else {
+        setErrorMessage("");
+        setFile(droppedFile);
+      }
     }
-    setFile(droppedFile);
   };
 
   const handleSubmit = async (e) => {
@@ -209,8 +217,7 @@ const EditSuratKeluar = () => {
               onChange={(e) => setNoPaket(e.target.value)}
             />
 
-            {/* Drag and Drop File Upload */}
-            <div className="flex ">
+            <div className="flex">
               <label className="font-semibold mr-20">Unggah File Baru</label>
               <div
                 onDragOver={handleDragOver}
@@ -235,9 +242,11 @@ const EditSuratKeluar = () => {
                 />
               </div>
             </div>
+
             {errorMessage && (
               <div className="mt-2 text-sm text-red-500">{errorMessage}</div>
             )}
+
             {!file && originalData?.fileUrl && (
               <div className="mt-2 text-sm text-gray-700">
                 <p>
@@ -259,7 +268,7 @@ const EditSuratKeluar = () => {
               disabled={!isChanged()}
               className={`mt-4 py-2 rounded-md ${
                 isChanged()
-                  ? "bg-[#34542C] hover:bg-[#34542C] text-black"
+                  ? "bg-[#34542C] hover:bg-[#34542C] text-white font-semibold"
                   : "bg-[#34542C] opacity-70 text-gray-500 cursor-not-allowed"
               }`}
             >

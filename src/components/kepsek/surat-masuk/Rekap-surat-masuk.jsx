@@ -49,12 +49,6 @@ const SuratMasuk = () => {
     setFilteredSurat(filtered);
   };
 
-  const formatTanggal = (dateString) => {
-    if (!dateString) return "-";
-    const date = new Date(dateString);
-    return isNaN(date.getTime()) ? "-" : date.toISOString().split("T")[0];
-  };
-
   const handleView = (id) => {
     navigate(`/kepsek/detail-surat-masuk/${id}`);
   };
@@ -146,8 +140,16 @@ const SuratMasuk = () => {
                         {surat.alamatPengirim || "-"}
                       </td>
                       <td className="p-3">
-                        {formatTanggal(surat.tanggalTerima)}
+                        {new Date(surat.tanggalTerima).toLocaleDateString(
+                          "id-ID",
+                          {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                          }
+                        )}
                       </td>
+
                       <td className="p-3">
                         {surat.sifatSurat === "SangatSegera"
                           ? "Sangat Segera"

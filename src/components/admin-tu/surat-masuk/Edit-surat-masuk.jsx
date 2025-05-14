@@ -254,7 +254,7 @@ const EditSuratMasuk = () => {
               disabled={!isChanged()}
               className={`mt-4 py-2 rounded-md ${
                 isChanged()
-                  ? "bg-[#34542C] hover:bg-[#34542C] text-black"
+                  ? "bg-[#34542C] hover:bg-[#34542C] text-white font-semibold"
                   : "bg-[#34542C] opacity-70 text-gray-500 cursor-not-allowed"
               }`}
             >

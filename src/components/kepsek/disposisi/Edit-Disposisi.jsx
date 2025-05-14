@@ -1,3 +1,4 @@
+// ... import statements tetap
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Kepsekvigasi";
@@ -15,11 +16,14 @@ const EditDisposisi = () => {
   const [alamatPengirim, setAlamatPengirim] = useState("");
   const [tanggalTerima, setTanggalTerima] = useState("");
   const [sifatSurat, setSifatSurat] = useState("");
-  const [disposisi, setDisposisi] = useState("");
+  const [disposisikanKe, setDisposisikanKe] = useState("");
   const [isiDisposisi, setIsiDisposisi] = useState("");
   const [tenggatWaktu, setTenggatWaktu] = useState("");
   const [originalData, setOriginalData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [adminList, setAdminList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const fetchSurat = async () => {
@@ -35,7 +39,7 @@ const EditDisposisi = () => {
         setAlamatPengirim(data.alamatPengirim);
         setTanggalTerima(data.tanggalTerima.slice(0, 10));
         setSifatSurat(data.sifatSurat);
-        setDisposisi(data.disposisi);
+        setDisposisikanKe(data.disposisikanKe);
         setIsiDisposisi(data.isiDisposisi);
         setTenggatWaktu(data.tenggatWaktu?.slice(0, 10));
 
@@ -45,9 +49,10 @@ const EditDisposisi = () => {
           alamatPengirim: data.alamatPengirim,
           tanggalTerima: data.tanggalTerima.slice(0, 10),
           sifatSurat: data.sifatSurat,
-          disposisi: data.disposisi,
+          disposisikanKe: data.disposisikanKe,
           isiDisposisi: data.isiDisposisi,
           tenggatWaktu: data.tenggatWaktu?.slice(0, 10),
+          fileUrl: data.fileUrl,
         });
       } catch (error) {
         console.error("Error fetching surat masuk:", error);
@@ -57,6 +62,23 @@ const EditDisposisi = () => {
     fetchSurat();
   }, [id]);
 
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/users?role=admin`
+        );
+        if (!response.ok) throw new Error("Failed to fetch admins");
+        const admins = await response.json();
+        setAdminList(admins);
+      } catch (error) {
+        console.error("Error fetching admins:", error);
+      }
+    };
+
+    fetchAdmins();
+  }, []);
+
   const isChanged = () => {
     if (!originalData) return false;
     return (
@@ -65,7 +87,7 @@ const EditDisposisi = () => {
       alamatPengirim !== originalData.alamatPengirim ||
       tanggalTerima !== originalData.tanggalTerima ||
       sifatSurat !== originalData.sifatSurat ||
-      disposisi !== originalData.disposisi ||
+      disposisikanKe !== originalData.disposisikanKe ||
       isiDisposisi !== originalData.isiDisposisi ||
       tenggatWaktu !== originalData.tenggatWaktu ||
       file !== null
@@ -73,7 +95,37 @@ const EditDisposisi = () => {
   };
 
   const handleFileChange = (e) => {
-    setFile(e.target.files[0]);
+    const selectedFile = e.target.files[0];
+    if (selectedFile && selectedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      setFile(null);
+    } else {
+      setErrorMessage("");
+      setFile(selectedFile);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+
+    const droppedFile = e.dataTransfer.files[0];
+    if (droppedFile && droppedFile.size > 2 * 1024 * 1024) {
+      setErrorMessage("Ukuran file maksimal 2MB.");
+      setFile(null);
+    } else {
+      setErrorMessage("");
+      setFile(droppedFile);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -86,7 +138,7 @@ const EditDisposisi = () => {
       formData.append("alamatPengirim", alamatPengirim);
       formData.append("tanggalTerima", tanggalTerima);
       formData.append("sifatSurat", sifatSurat);
-      formData.append("disposisi", disposisi);
+      formData.append("disposisikanKe", disposisikanKe);
       formData.append("isiDisposisi", isiDisposisi);
       formData.append("tenggatWaktu", tenggatWaktu);
       if (file) formData.append("fileUrl", file);
@@ -100,7 +152,7 @@ const EditDisposisi = () => {
       );
 
       if (response.ok) {
-        setShowSuccess(true); // Show success alert after successful update
+        setShowSuccess(true);
       } else {
         alert("Terjadi kesalahan saat mengupdate Surat Masuk.");
       }
@@ -112,7 +164,7 @@ const EditDisposisi = () => {
 
   const handleCloseAlert = () => {
     setShowSuccess(false);
-    navigate("/kepsek/Daftar-Disposisi"); // Redirect after closing alert
+    navigate("/kepsek/Daftar-Disposisi");
   };
 
   return (
@@ -144,19 +196,16 @@ const EditDisposisi = () => {
           >
             <InputForm
               label="No. Surat"
-              placeholder="Masukkan No. Surat"
               value={noSurat}
               onChange={(e) => setNoSurat(e.target.value)}
             />
             <InputForm
               label="Perihal"
-              placeholder="Masukkan Perihal"
               value={perihal}
               onChange={(e) => setPerihal(e.target.value)}
             />
             <InputForm
               label="Alamat Pengirim"
-              placeholder="Masukkan Alamat Pengirim"
               value={alamatPengirim}
               onChange={(e) => setAlamatPengirim(e.target.value)}
             />
@@ -168,7 +217,7 @@ const EditDisposisi = () => {
             />
             <InputForm
               label="Sifat Surat"
-              isSelect={true}
+              isSelect
               value={sifatSurat}
               onChange={(e) => setSifatSurat(e.target.value)}
               options={[
@@ -178,17 +227,25 @@ const EditDisposisi = () => {
                 { value: "Biasa", label: "Biasa" },
               ]}
             />
-            <InputForm
-              label="Disposisi"
-              placeholder="Masukkan Disposisi"
-              value={disposisi}
-              onChange={(e) => setDisposisi(e.target.value)}
-            />
+            <div className="mb-4 flex gap-4 items-center">
+              <h3 className="font-semibold mr-16">Disposisikan ke</h3>
+              <select
+                className="w-[480px] p-4 bg-white rounded shadow-md"
+                value={disposisikanKe}
+                onChange={(e) => setDisposisikanKe(e.target.value)}
+              >
+                <option value="">Pilih</option>
+                {adminList.map((admin) => (
+                  <option key={admin.id} value={admin.username}>
+                    {admin.username}
+                  </option>
+                ))}
+              </select>
+            </div>
             <InputForm
               label="Isi Disposisi"
-              placeholder="Masukkan Isi Disposisi"
               value={isiDisposisi}
-              isTextarea={true}
+              isTextarea
               onChange={(e) => setIsiDisposisi(e.target.value)}
             />
             <InputForm
@@ -198,13 +255,45 @@ const EditDisposisi = () => {
               onChange={(e) => setTenggatWaktu(e.target.value)}
             />
 
-            <InputForm
-              label="Upload File Baru"
-              type="file"
-              onChange={handleFileChange}
-            />
-            {file && (
-              <p className="text-sm text-gray-600 mt-1">File: {file.name}</p>
+            {/* Drag & Drop File Upload */}
+            <div className="flex">
+              <label className="font-semibold mr-28">Unggah File Baru</label>
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`w-[700px] p-4 rounded shadow-md bg-white text-center cursor-pointer transition-all duration-200 ${
+                  isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
+                }`}
+              >
+                <label htmlFor="fileInput" className="block cursor-pointer">
+                  {file ? file.name : "Klik atau seret file ke sini (maks 2MB)"}
+                </label>
+                <input
+                  type="file"
+                  id="fileInput"
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                />
+              </div>
+              {errorMessage && (
+                <div className="text-sm text-red-500 mt-1">{errorMessage}</div>
+              )}
+            </div>
+
+            {!file && originalData?.fileUrl && (
+              <div className="mt-2 text-sm text-gray-700">
+                File sebelumnya:{" "}
+                <a
+                  href={originalData.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  Lihat File Lama
+                </a>
+              </div>
             )}
 
             <button
