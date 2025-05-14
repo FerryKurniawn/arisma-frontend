@@ -3,7 +3,7 @@ import Navigasi from "../Navigasi";
 import { useNavigate } from "react-router-dom";
 import "react-datepicker/dist/react-datepicker.css";
 import Logout from "../../Logout";
-import SentAlert from "../../SentAlert";
+import AddAlert from "../../AddAlert";
 import { format } from "date-fns";
 
 const TambahSuratKeluar = () => {
@@ -27,6 +27,7 @@ const TambahSuratKeluar = () => {
       setErrorMessage("Ukuran file maksimal 2MB.");
       return;
     }
+    setErrorMessage("");
     setFile(selectedFile);
   };
 
@@ -47,6 +48,7 @@ const TambahSuratKeluar = () => {
       setErrorMessage("Ukuran file maksimal 2MB.");
       return;
     }
+    setErrorMessage("");
     setFile(droppedFile);
   };
 
@@ -231,7 +233,31 @@ const TambahSuratKeluar = () => {
 
               <button
                 type="submit"
-                className="self-start mt-4 bg-gray-300 hover:bg-gray-400 text-black py-2 px-6 rounded-md"
+                disabled={
+                  !noSurat ||
+                  !perihal ||
+                  !alamatPenerima ||
+                  !tanggalKeluar ||
+                  !perihal ||
+                  !noPetunjuk ||
+                  !noPaket ||
+                  !file ||
+                  errorMessage
+                }
+                className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200
+    ${
+      !noSurat ||
+      !perihal ||
+      !alamatPenerima ||
+      !tanggalKeluar ||
+      !perihal ||
+      !noPetunjuk ||
+      !noPaket ||
+      !file ||
+      errorMessage
+        ? "bg-gray-300 cursor-not-allowed"
+        : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
+    }`}
               >
                 Tambah
               </button>
@@ -240,7 +266,7 @@ const TambahSuratKeluar = () => {
 
           {showSuccess && (
             <div className="fixed inset-0 flex justify-center items-center z-50">
-              <SentAlert
+              <AddAlert
                 onClose={() => {
                   setShowSuccess(false);
                   navigate("/admin/rekap-surat-keluar");

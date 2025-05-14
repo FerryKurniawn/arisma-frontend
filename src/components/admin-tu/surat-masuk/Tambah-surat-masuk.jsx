@@ -26,6 +26,7 @@ const TambahSuratMasuk = () => {
       setErrorMessage("Ukuran file maksimal 2MB.");
       return;
     }
+    setErrorMessage("");
     setFile(selectedFile);
   };
 
@@ -46,6 +47,7 @@ const TambahSuratMasuk = () => {
       setErrorMessage("Ukuran file maksimal 2MB.");
       return;
     }
+    setErrorMessage("");
     setFile(droppedFile);
   };
 
@@ -208,7 +210,27 @@ const TambahSuratMasuk = () => {
               )}
               <button
                 type="submit"
-                className="self-start mt-4 bg-gray-300 hover:bg-gray-400 text-black py-2 px-6 rounded-md"
+                disabled={
+                  !noSurat ||
+                  !perihal ||
+                  !alamatPengirim ||
+                  !tanggalTerima ||
+                  !sifatSurat ||
+                  !file ||
+                  errorMessage
+                }
+                className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200
+    ${
+      !noSurat ||
+      !perihal ||
+      !alamatPengirim ||
+      !tanggalTerima ||
+      !sifatSurat ||
+      !file ||
+      errorMessage
+        ? "bg-gray-300 cursor-not-allowed"
+        : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
+    }`}
               >
                 Tambah
               </button>
