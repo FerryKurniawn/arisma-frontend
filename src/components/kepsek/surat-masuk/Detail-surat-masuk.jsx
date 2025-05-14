@@ -94,17 +94,20 @@ const DetailSuratMasuk = () => {
     }
 
     try {
-      const res = await fetch(`http://localhost:2000/api/surat-masuk/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          disposisi: surat.disposisikanKe,
-          isiDisposisi: surat.isiDisposisi,
-          tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(), // Mengubah tanggal ke ISO format
-        }),
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            disposisi: surat.disposisikanKe,
+            isiDisposisi: surat.isiDisposisi,
+            tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(), // Mengubah tanggal ke ISO format
+          }),
+        }
+      );
 
       if (res.ok) {
         setShowSuccess(true); // Show success alert if successful

@@ -14,7 +14,7 @@ const BerandaKepsek = () => {
     const fetchData = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:2000/api/dashboard?role=kepsek"
+          `${import.meta.env.VITE_API_URL}/api/dashboard?role=kepsek`
         );
 
         // Pastikan bahwa data rekap sudah ada dalam response

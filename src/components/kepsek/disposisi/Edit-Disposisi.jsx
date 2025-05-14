@@ -25,7 +25,7 @@ const EditDisposisi = () => {
     const fetchSurat = async () => {
       try {
         const response = await fetch(
-          `http://localhost:2000/api/surat-masuk/${id}`
+          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
         );
         if (!response.ok) throw new Error("Gagal mengambil data surat masuk");
         const data = await response.json();

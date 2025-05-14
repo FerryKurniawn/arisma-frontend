@@ -56,9 +56,12 @@ const DaftarDisposisi = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:2000/api/surat-masuk/${id}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
+        {
+          method: "DELETE",
+        }
+      );
       if (res.ok) {
         fetchData();
       } else {

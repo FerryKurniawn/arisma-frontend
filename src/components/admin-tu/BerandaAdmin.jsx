@@ -13,7 +13,9 @@ const BerandaAdmin = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get("http://localhost:2000/api/dashboard");
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/dashboard`
+        );
         setDashboardData(res.data);
       } catch (err) {
         console.error("Gagal fetch dashboard", err);
@@ -38,24 +40,32 @@ const BerandaAdmin = () => {
 
         {/* Dashboard Content */}
         <section className="flex-1 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Dashboard</h2>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">
+            Dashboard
+          </h2>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
             <div className="bg-white rounded-lg shadow p-4 text-center">
               <h3 className="text-gray-600 mb-1">Jumlah Surat Masuk</h3>
-              <p className="text-3xl font-bold text-black">{dashboardData.totalMasuk}</p>
+              <p className="text-3xl font-bold text-black">
+                {dashboardData.totalMasuk}
+              </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4 text-center">
               <h3 className="text-gray-600 mb-1">Jumlah Surat Keluar</h3>
-              <p className="text-3xl font-bold text-black">{dashboardData.totalKeluar}</p>
+              <p className="text-3xl font-bold text-black">
+                {dashboardData.totalKeluar}
+              </p>
             </div>
           </div>
 
           {/* Table */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-4 py-2 border-b">
-              <h3 className="text-base font-medium text-gray-700">Rekap Surat per Tahun</h3>
+              <h3 className="text-base font-medium text-gray-700">
+                Rekap Surat per Tahun
+              </h3>
             </div>
             <table className="w-full table-auto text-sm">
               <thead className="bg-[#34542C] text-white">
