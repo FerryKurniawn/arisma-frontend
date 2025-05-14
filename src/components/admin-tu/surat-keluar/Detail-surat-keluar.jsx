@@ -14,7 +14,7 @@ const DetailSuratKeluar = () => {
     const fetchSurat = async () => {
       try {
         const response = await fetch(
-          `http://localhost:2000/api/surat-keluar/${id}`
+          `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`
         );
         if (!response.ok) {
           throw new Error("Gagal mengambil data surat keluar");

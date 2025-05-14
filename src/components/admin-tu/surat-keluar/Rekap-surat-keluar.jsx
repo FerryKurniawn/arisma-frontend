@@ -13,7 +13,7 @@ const RekapSuratKeluar = () => {
   const [selectedId, setSelectedId] = useState(null);
 
   const fetchSuratKeluar = () => {
-    fetch("http://localhost:2000/api/surat-keluar")
+    fetch(`${import.meta.env.VITE_API_URL}/api/surat-keluar/`)
       .then((res) => res.json())
       .then((data) => {
         setDataSurat(data);

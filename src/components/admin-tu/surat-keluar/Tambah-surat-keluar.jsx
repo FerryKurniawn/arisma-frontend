@@ -66,10 +66,13 @@ const TambahSuratKeluar = () => {
     }
 
     try {
-      const response = await fetch("http://localhost:2000/api/surat-keluar", {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/surat-keluar/`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (response.ok) {
         setShowSuccess(true);
