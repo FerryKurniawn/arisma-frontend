@@ -241,7 +241,7 @@ const TambahSuratKeluar = () => {
                   !perihal ||
                   !noPetunjuk ||
                   !noPaket ||
-                  !file ||
+                  // !file ||
                   errorMessage
                 }
                 className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200
@@ -253,7 +253,7 @@ const TambahSuratKeluar = () => {
       !perihal ||
       !noPetunjuk ||
       !noPaket ||
-      !file ||
+      // !file ||
       errorMessage
         ? "bg-gray-300 cursor-not-allowed"
         : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
