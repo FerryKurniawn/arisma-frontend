@@ -40,9 +40,7 @@ const BerandaAdmin = () => {
 
         {/* Dashboard Content */}
         <section className="flex-1 px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">
-            Dashboard
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800 mb-4">Beranda</h2>
 
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
