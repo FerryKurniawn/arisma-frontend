@@ -49,7 +49,7 @@ export default function LoginPage() {
       <div className="bg-white shadow-xl rounded-2xl flex flex-col md:flex-row w-full max-w-4xl overflow-hidden">
         {/* Left Image Section */}
         <div className="md:w-1/2 flex justify-center items-center bg-gray-50 p-6">
-          <img src="man1.png" alt="Login" className="w-3/4 md:w-[250px]" />
+          <img src="man1.png" alt="Login" className="w-2/4 md:w-[250px]" />
         </div>
 
         {/* Right Form Section */}
