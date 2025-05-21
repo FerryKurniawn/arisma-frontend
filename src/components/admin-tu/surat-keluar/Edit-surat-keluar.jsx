@@ -247,7 +247,7 @@ const EditSuratKeluar = () => {
               <div className="mt-2 text-sm text-red-500">{errorMessage}</div>
             )}
 
-            {!file && originalData?.fileUrl && (
+            {!file && originalData?.fileUrl ? (
               <div className="mt-2 text-sm text-gray-700">
                 <p>
                   File sebelumnya:{" "}
@@ -261,6 +261,12 @@ const EditSuratKeluar = () => {
                   </a>
                 </p>
               </div>
+            ) : (
+              !file && (
+                <div className="mt-2 text-sm text-red-500">
+                  <p>Tidak ada file lama yang terlampir.</p>
+                </div>
+              )
             )}
 
             <button
