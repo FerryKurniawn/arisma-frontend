@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navigasi from "../admin-tu/Navigasi";
 import Logout from "../Logout";
-import axios from "axios";
+import { supabase } from "../../supabaseClient";
 
 const BerandaAdmin = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -13,14 +13,76 @@ const BerandaAdmin = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard`
+        // Ambil total jumlah surat masuk
+        const { count: totalMasuk, error: errorMasuk } = await supabase
+          .from("SuratMasuk")
+          .select("*", { count: "exact", head: true });
+
+        if (errorMasuk) throw errorMasuk;
+
+        // Ambil total jumlah surat keluar
+        const { count: totalKeluar, error: errorKeluar } = await supabase
+          .from("SuratKeluar")
+          .select("*", { count: "exact", head: true });
+
+        if (errorKeluar) throw errorKeluar;
+
+        // Ambil semua data surat masuk (untuk rekap per tahun)
+        const { data: masukData, error: masukDataError } = await supabase
+          .from("SuratMasuk")
+          .select("tanggalTerima");
+
+        if (masukDataError) throw masukDataError;
+
+        // Ambil semua data surat keluar (untuk rekap per tahun)
+        const { data: keluarData, error: keluarDataError } = await supabase
+          .from("SuratKeluar")
+          .select("tanggalKeluar");
+
+        if (keluarDataError) throw keluarDataError;
+
+        // Hitung rekap surat masuk per tahun
+        const masukPerTahun = {};
+        masukData.forEach((item) => {
+          const tahun = new Date(item.tanggalTerima).getFullYear();
+          masukPerTahun[tahun] = (masukPerTahun[tahun] || 0) + 1;
+        });
+
+        // Hitung rekap surat keluar per tahun
+        const keluarPerTahun = {};
+        keluarData.forEach((item) => {
+          const tahun = new Date(item.tanggalKeluar).getFullYear();
+          keluarPerTahun[tahun] = (keluarPerTahun[tahun] || 0) + 1;
+        });
+
+        // Gabungkan semua tahun
+        const allYears = Array.from(
+          new Set([
+            ...Object.keys(masukPerTahun),
+            ...Object.keys(keluarPerTahun),
+          ])
         );
-        setDashboardData(res.data);
+
+        // Susun rekap
+        const rekap = allYears
+          .map((tahun) => ({
+            tahun,
+            masuk: masukPerTahun[tahun] || 0,
+            keluar: keluarPerTahun[tahun] || 0,
+          }))
+          .sort((a, b) => b.tahun - a.tahun); // Sort dari tahun terbaru ke lama
+
+        // Set data ke state
+        setDashboardData({
+          totalMasuk,
+          totalKeluar,
+          rekap,
+        });
       } catch (err) {
-        console.error("Gagal fetch dashboard", err);
+        console.error("Gagal fetch dashboard:", err.message);
       }
     };
+
     fetchData();
   }, []);
 
@@ -58,7 +120,7 @@ const BerandaAdmin = () => {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Table Rekap Per Tahun */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-4 py-2 border-b">
               <h3 className="text-base font-medium text-gray-700">
@@ -74,13 +136,21 @@ const BerandaAdmin = () => {
                 </tr>
               </thead>
               <tbody className="text-gray-700">
-                {dashboardData.rekap.map((item) => (
-                  <tr key={item.tahun} className="hover:bg-gray-100 border-b">
-                    <td className="px-4 py-2">{item.tahun}</td>
-                    <td className="px-4 py-2">{item.masuk}</td>
-                    <td className="px-4 py-2">{item.keluar}</td>
+                {dashboardData.rekap.length > 0 ? (
+                  dashboardData.rekap.map((item) => (
+                    <tr key={item.tahun} className="hover:bg-gray-100 border-b">
+                      <td className="px-4 py-2">{item.tahun}</td>
+                      <td className="px-4 py-2">{item.masuk}</td>
+                      <td className="px-4 py-2">{item.keluar}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="3" className="text-center py-4">
+                      Belum ada data rekap.
+                    </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabaseClient";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -12,32 +13,30 @@ export default function LoginPage() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        }
-      );
+      const { data, error } = await supabase
+        .from("User")
+        .select("*")
+        .eq("username", username)
+        .eq("password", password)
+        .single();
 
-      const data = await response.json();
-
-      if (response.status === 200) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("user", JSON.stringify(data.user));
-        if (data.user.role === "ADMIN") {
-          navigate("/admin/beranda-admin");
-        } else if (data.user.role === "KEPSEK") {
-          navigate("/kepsek/beranda-kepsek");
-        }
+      if (error || !data) {
+        setError("Username atau password salah");
       } else {
-        setError(data.message || "Terjadi kesalahan");
+        localStorage.setItem("user", JSON.stringify(data));
+        if (data.role === "ADMIN") {
+          navigate("/admin/beranda-admin");
+        } else if (data.role === "KEPSEK") {
+          navigate("/kepsek/beranda-kepsek");
+        } else {
+          setError("Role tidak dikenali");
+        }
       }
     } catch (err) {
-      console.log(err);
+      console.error("Login error:", err);
       setError("Terjadi kesalahan pada server");
     } finally {
       setIsLoading(false);
@@ -47,12 +46,9 @@ export default function LoginPage() {
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4 py-10">
       <div className="bg-white shadow-xl rounded-2xl flex flex-col md:flex-row w-full max-w-4xl overflow-hidden">
-        {/* Left Image Section */}
         <div className="md:w-1/2 flex justify-center items-center bg-gray-50 p-6">
           <img src="man1.png" alt="Login" className="w-2/4 md:w-[250px]" />
         </div>
-
-        {/* Right Form Section */}
         <div className="md:w-1/2 w-full p-6 md:p-10">
           <div className="text-center text-gray-700">
             <strong className="text-2xl block">ARISMA</strong>
@@ -60,26 +56,22 @@ export default function LoginPage() {
               ARSIP DIGITAL MADRASAH ALIYAH NEGERI 1 SINTANG
             </strong>
           </div>
-
           <form className="mt-6 space-y-4" onSubmit={handleLogin}>
-            {/* Username */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
                 Username
               </label>
               <input
                 type="text"
-                id="username"
                 className={`w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-600 ${
                   error ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="Enter your username"
+                placeholder="Masukkan Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />
             </div>
 
-            {/* Password */}
             <div>
               <label className="block text-gray-700 font-medium mb-1">
                 Password
@@ -87,11 +79,10 @@ export default function LoginPage() {
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
-                  id="password"
                   className={`w-full px-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-green-600 pr-10 ${
                     error ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="Enter your password"
+                  placeholder="Masukkan Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
@@ -109,12 +100,10 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Error Message */}
             {error && (
               <div className="text-red-500 text-sm text-center">{error}</div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               className="w-full bg-green-800 hover:bg-green-900 text-white font-semibold py-2 rounded-full transition duration-200"

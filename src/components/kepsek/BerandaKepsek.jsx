@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Navigasi from "./Kepsekvigasi";
 import Logout from "../Logout";
-import axios from "axios";
+import { supabase } from "../../supabaseClient";
 
 const BerandaKepsek = () => {
   const [dashboardData, setDashboardData] = useState({
@@ -13,33 +13,67 @@ const BerandaKepsek = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/dashboard?role=kepsek`
-        );
+        // Ambil semua surat masuk
+        const { data: suratMasukData, error: suratError } = await supabase
+          .from("SuratMasuk")
+          .select("*");
 
-        // Pastikan bahwa data rekap sudah ada dalam response
-        if (res.data) {
-          const rekap = res.data.rekap || [];
+        if (suratError) throw suratError;
 
-          // Hitung total disposisi dengan menjumlahkan nilai disposisi per tahun
-          const totalDisposisi = rekap.reduce(
-            (acc, item) => acc + item.disposisi,
-            0
+        // Hitung total surat masuk
+        const totalMasuk = suratMasukData.length;
+
+        // Ambil semua data disposisi
+        const { data: disposisiData, error: disposisiError } = await supabase
+          .from("DaftarDisposisi")
+          .select("*");
+
+        if (disposisiError) throw disposisiError;
+
+        const totalDisposisi = disposisiData.length;
+
+        // Buat rekap per tahun berdasarkan tanggalTerima di suratMasuk
+        const rekapMap = {};
+
+        suratMasukData.forEach((surat) => {
+          const tahun = new Date(surat.tanggalTerima).getFullYear();
+          if (!rekapMap[tahun]) {
+            rekapMap[tahun] = { masuk: 0, disposisi: 0 };
+          }
+          rekapMap[tahun].masuk += 1;
+        });
+
+        disposisiData.forEach((disposisi) => {
+          const suratTerkait = suratMasukData.find(
+            (surat) => surat.id === disposisi.suratMasukId
           );
+          if (suratTerkait) {
+            const tahun = new Date(suratTerkait.tanggalTerima).getFullYear();
+            if (!rekapMap[tahun]) {
+              rekapMap[tahun] = { masuk: 0, disposisi: 0 };
+            }
+            rekapMap[tahun].disposisi += 1;
+          }
+        });
 
-          setDashboardData({
-            totalMasuk: res.data.totalMasuk || 0, // Menangani jika tidak ada data
-            totalDisposisi: totalDisposisi, // Hitung total disposisi
-            rekap: rekap,
-          });
-        }
-      } catch (err) {
-        console.error("Gagal fetch dashboard", err);
+        const rekap = Object.keys(rekapMap).map((tahun) => ({
+          tahun,
+          masuk: rekapMap[tahun].masuk,
+          disposisi: rekapMap[tahun].disposisi,
+        }));
+
+        setDashboardData({
+          totalMasuk,
+          totalDisposisi,
+          rekap,
+        });
+      } catch (error) {
+        console.error("Gagal fetch dashboard:", error);
       }
     };
 
     fetchData();
-  }, []); // Dependency array kosong berarti hanya dipanggil sekali saat komponen pertama kali di-render
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-sm">
@@ -75,7 +109,7 @@ const BerandaKepsek = () => {
             </div>
           </div>
 
-          {/* Table */}
+          {/* Table Rekap */}
           <div className="bg-white rounded-lg shadow overflow-hidden">
             <div className="px-4 py-2 border-b">
               <h3 className="text-base font-medium text-gray-700">

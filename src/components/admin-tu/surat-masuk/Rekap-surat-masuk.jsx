@@ -3,6 +3,7 @@ import Navigasi from "../Navigasi";
 import Logout from "../../Logout";
 import { useNavigate } from "react-router-dom";
 import Delete from "../Delete";
+import { supabase } from "../../../supabaseClient";
 
 const RekapSuratMasuk = () => {
   const navigate = useNavigate();
@@ -12,35 +13,37 @@ const RekapSuratMasuk = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  const fetchSuratKeluar = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/surat-masuk/`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDataSurat(data);
-        setFilteredSurat(data);
-      })
-      .catch((err) =>
-        console.error("Gagal fetch data surat keluar:", err.message)
-      );
+  const fetchSuratMasuk = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("SuratMasuk")
+        .select("*")
+        .order("createdAt", { ascending: false });
+
+      if (error) throw error;
+
+      setDataSurat(data);
+      setFilteredSurat(data);
+    } catch (error) {
+      console.error("Gagal fetch data surat masuk:", error.message);
+    }
   };
 
   useEffect(() => {
-    fetchSuratKeluar();
+    fetchSuratMasuk();
   }, []);
 
   const handleSearch = () => {
     const filtered = dataSurat.filter((surat) => {
       const search = searchTerm.toLowerCase();
       return (
-        surat.noSurat.toLowerCase().includes(search) ||
-        surat.perihal.toLowerCase().includes(search) ||
-        surat.alamatPengirim.toLowerCase().includes(search) ||
-        surat.tanggalTerima.toLowerCase().includes(search) ||
-        (surat.sifatSurat && surat.sifatSurat.toLowerCase().includes(search)) ||
-        (surat.disposisikanKe &&
-          surat.disposisikanKe.toLowerCase().includes(search)) ||
-        (surat.isiDisposisi &&
-          surat.isiDisposisi.toLowerCase().includes(search))
+        surat.noSurat?.toLowerCase().includes(search) ||
+        surat.perihal?.toLowerCase().includes(search) ||
+        surat.alamatPengirim?.toLowerCase().includes(search) ||
+        surat.tanggalTerima?.toLowerCase().includes(search) ||
+        surat.sifatSurat?.toLowerCase().includes(search) ||
+        surat.disposisikanKe?.toLowerCase().includes(search) ||
+        surat.isiDisposisi?.toLowerCase().includes(search)
       );
     });
 
@@ -49,19 +52,13 @@ const RekapSuratMasuk = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (res.ok) {
-        fetchSuratKeluar();
-      } else {
-        alert("Gagal menghapus surat.");
-      }
-    } catch (err) {
-      console.error("Error saat hapus surat:", err);
+      const { error } = await supabase.from("SuratMasuk").delete().eq("id", id);
+
+      if (error) throw error;
+
+      fetchSuratMasuk();
+    } catch (error) {
+      console.error("Error saat hapus surat:", error.message);
       alert("Terjadi kesalahan.");
     } finally {
       setShowDeleteModal(false);
@@ -105,7 +102,7 @@ const RekapSuratMasuk = () => {
                   className="w-full border rounded-md py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
                 <div className="absolute right-3 top-2.5 text-gray-400">
-                  <img src="/search.png" width="15px" />
+                  <img src="/search.png" width="15px" alt="Search" />
                 </div>
               </div>
               <button
@@ -173,7 +170,6 @@ const RekapSuratMasuk = () => {
                           }
                         )}
                       </td>
-
                       <td className="p-3">
                         {surat.sifatSurat === "SangatSegera"
                           ? "Sangat Segera"

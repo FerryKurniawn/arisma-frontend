@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Kepsekvigasi";
 import Logout from "../../Logout";
+import { supabase } from "../../../supabaseClient";
 
 const formatTanggal = (tanggal) => {
   if (!tanggal) return "-";
@@ -20,15 +21,16 @@ const DetailDisposisi = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
-        );
-        if (!response.ok) throw new Error("Gagal mengambil data surat masuk");
+        const { data, error } = await supabase
+          .from("SuratMasuk")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-        const data = await response.json();
+        if (error) throw error;
         setSurat(data);
       } catch (error) {
-        console.error("Error fetching surat masuk:", error);
+        console.error("Error fetching surat masuk:", error.message);
       }
     };
 
@@ -80,7 +82,11 @@ const DetailDisposisi = () => {
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Sifat Surat</h3>
-                <p className="col-span-2">{surat.sifatSurat}</p>
+                <p className="col-span-2">
+                  {surat.sifatSurat == "SangatSegera"
+                    ? "Sangat Segera"
+                    : surat.sifatSurat}
+                </p>
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Disposisikan Ke</h3>
@@ -104,7 +110,7 @@ const DetailDisposisi = () => {
                 <div className="mb-4 grid grid-cols-3 gap-4">
                   <h3 className="font-semibold">File Surat</h3>
                   <a
-                    href={`${import.meta.env.VITE_API_URL}${surat.fileUrl}`}
+                    href={surat.fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-blue-500 underline col-span-2"

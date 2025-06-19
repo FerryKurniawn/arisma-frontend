@@ -4,6 +4,7 @@ import Navigasi from "../Navigasi";
 import InputForm from "../../InputForm";
 import Logout from "../../Logout";
 import UpdateAlert from "../../UpdateAlert";
+import { supabase } from "../../../supabaseClient";
 
 const EditSuratMasuk = () => {
   const navigate = useNavigate();
@@ -23,11 +24,13 @@ const EditSuratMasuk = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
-        );
-        if (!response.ok) throw new Error("Gagal mengambil data surat masuk");
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratMasuk")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
 
         setNoSurat(data.noSurat);
         setPerihal(data.perihal);
@@ -41,10 +44,10 @@ const EditSuratMasuk = () => {
           alamatPengirim: data.alamatPengirim,
           tanggalTerima: data.tanggalTerima.slice(0, 10),
           sifatSurat: data.sifatSurat,
-          fileUrl: data.fileUrl, // simpan file lama
+          fileUrl: data.fileUrl,
         });
       } catch (error) {
-        console.error("Error fetching surat masuk:", error);
+        console.error("Error fetching surat masuk:", error.message);
       }
     };
 
@@ -88,7 +91,6 @@ const EditSuratMasuk = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (droppedFile.size > 2 * 1024 * 1024) {
@@ -105,30 +107,43 @@ const EditSuratMasuk = () => {
     e.preventDefault();
 
     try {
-      const formData = new FormData();
-      formData.append("noSurat", noSurat);
-      formData.append("perihal", perihal);
-      formData.append("alamatPengirim", alamatPengirim);
-      formData.append("tanggalTerima", tanggalTerima);
-      formData.append("sifatSurat", sifatSurat);
-      if (file) formData.append("fileUrl", file);
+      let fileUrl = originalData?.fileUrl;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
+      // jika ada file baru diupload
+      if (file) {
+        const { data: uploadedFile, error: uploadError } =
+          await supabase.storage
+            .from("surat-masuk") // nama bucket storage kamu
+            .upload(`surat-masuk/${Date.now()}_${file.name}`, file);
 
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        alert("Terjadi kesalahan saat mengupdate Surat Masuk.");
+        if (uploadError) throw uploadError;
+
+        const { data: fileData } = supabase.storage
+          .from("surat-masuk")
+          .getPublicUrl(uploadedFile.path);
+
+        fileUrl = fileData.publicUrl;
       }
+
+      // update ke tabel SuratMasuk
+      const { error } = await supabase
+        .from("SuratMasuk")
+        .update({
+          noSurat,
+          perihal,
+          alamatPengirim,
+          tanggalTerima,
+          sifatSurat,
+          fileUrl,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setShowSuccess(true);
     } catch (error) {
-      console.error("Error updating Surat Masuk:", error);
-      alert("Terjadi kesalahan saat menghubungi server.");
+      console.error("Error updating Surat Masuk:", error.message);
+      alert("Terjadi kesalahan saat update data.");
     }
   };
 

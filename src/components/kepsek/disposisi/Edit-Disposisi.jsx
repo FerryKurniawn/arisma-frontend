@@ -1,10 +1,10 @@
-// ... import statements tetap
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Kepsekvigasi";
 import InputForm from "../../InputForm";
 import Logout from "../../Logout";
 import UpdateAlert from "../../UpdateAlert";
+import { supabase } from "../../../supabaseClient";
 
 const EditDisposisi = () => {
   const navigate = useNavigate();
@@ -21,18 +21,19 @@ const EditDisposisi = () => {
   const [tenggatWaktu, setTenggatWaktu] = useState("");
   const [originalData, setOriginalData] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [adminList, setAdminList] = useState([]);
   const [errorMessage, setErrorMessage] = useState("");
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
-        );
-        if (!response.ok) throw new Error("Gagal mengambil data surat masuk");
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratMasuk")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
 
         setNoSurat(data.noSurat);
         setPerihal(data.perihal);
@@ -55,29 +56,12 @@ const EditDisposisi = () => {
           fileUrl: data.fileUrl,
         });
       } catch (error) {
-        console.error("Error fetching surat masuk:", error);
+        console.error("Error fetching disposisi:", error.message);
       }
     };
 
     fetchSurat();
   }, [id]);
-
-  useEffect(() => {
-    const fetchAdmins = async () => {
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/users?role=admin`
-        );
-        if (!response.ok) throw new Error("Failed to fetch admins");
-        const admins = await response.json();
-        setAdminList(admins);
-      } catch (error) {
-        console.error("Error fetching admins:", error);
-      }
-    };
-
-    fetchAdmins();
-  }, []);
 
   const isChanged = () => {
     if (!originalData) return false;
@@ -117,7 +101,6 @@ const EditDisposisi = () => {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile && droppedFile.size > 2 * 1024 * 1024) {
       setErrorMessage("Ukuran file maksimal 2MB.");
@@ -130,35 +113,45 @@ const EditDisposisi = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
-      const formData = new FormData();
-      formData.append("noSurat", noSurat);
-      formData.append("perihal", perihal);
-      formData.append("alamatPengirim", alamatPengirim);
-      formData.append("tanggalTerima", tanggalTerima);
-      formData.append("sifatSurat", sifatSurat);
-      formData.append("disposisikanKe", disposisikanKe);
-      formData.append("isiDisposisi", isiDisposisi);
-      formData.append("tenggatWaktu", tenggatWaktu);
-      if (file) formData.append("fileUrl", file);
+      let fileUrl = originalData?.fileUrl;
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
+      if (file) {
+        const { data: uploadedFile, error: uploadError } =
+          await supabase.storage
+            .from("surat-masuk")
+            .upload(`surat-masuk/${Date.now()}_${file.name}`, file);
 
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        alert("Terjadi kesalahan saat mengupdate Surat Masuk.");
+        if (uploadError) throw uploadError;
+
+        const { data: fileData } = supabase.storage
+          .from("surat-masuk")
+          .getPublicUrl(uploadedFile.path);
+
+        fileUrl = fileData.publicUrl;
       }
+
+      const { error } = await supabase
+        .from("SuratMasuk")
+        .update({
+          noSurat,
+          perihal,
+          alamatPengirim,
+          tanggalTerima,
+          sifatSurat,
+          disposisikanKe,
+          isiDisposisi,
+          tenggatWaktu,
+          fileUrl,
+        })
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setShowSuccess(true);
     } catch (error) {
-      console.error("Error updating Surat Masuk:", error);
-      alert("Terjadi kesalahan saat menghubungi server.");
+      console.error("Error updating Disposisi:", error.message);
+      alert("Terjadi kesalahan saat update data.");
     }
   };
 
@@ -186,7 +179,7 @@ const EditDisposisi = () => {
               alt="back"
               width="20px"
               className="cursor-pointer"
-              onClick={() => navigate("/kepsek/Daftar-Disposisi")}
+              onClick={() => navigate("/kepsek/daftar-disposisi")}
             />
           </div>
 
@@ -227,25 +220,15 @@ const EditDisposisi = () => {
                 { value: "Biasa", label: "Biasa" },
               ]}
             />
-            <div className="mb-4 flex gap-4 items-center">
-              <h3 className="font-semibold mr-16">Disposisikan ke</h3>
-              <select
-                className="w-[480px] p-4 bg-white rounded shadow-md"
-                value={disposisikanKe}
-                onChange={(e) => setDisposisikanKe(e.target.value)}
-              >
-                <option value="">Pilih</option>
-                {adminList.map((admin) => (
-                  <option key={admin.id} value={admin.username}>
-                    {admin.username}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <InputForm
+              label="Disposisikan Ke"
+              value={disposisikanKe}
+              onChange={(e) => setDisposisikanKe(e.target.value)}
+            />
             <InputForm
               label="Isi Disposisi"
-              value={isiDisposisi}
               isTextarea
+              value={isiDisposisi}
               onChange={(e) => setIsiDisposisi(e.target.value)}
             />
             <InputForm
@@ -255,18 +238,17 @@ const EditDisposisi = () => {
               onChange={(e) => setTenggatWaktu(e.target.value)}
             />
 
-            {/* Drag & Drop File Upload */}
             <div className="flex">
               <label className="font-semibold mr-28">Unggah File Baru</label>
               <div
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
-                className={`w-[700px] p-4 rounded shadow-md bg-white text-center cursor-pointer transition-all duration-200 ${
+                className={`w-[700px] p-4 rounded shadow-md bg-white text-center cursor-pointer ${
                   isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300"
                 }`}
               >
-                <label htmlFor="fileInput" className="block cursor-pointer">
+                <label htmlFor="fileInput" className="cursor-pointer block">
                   {file ? file.name : "Klik atau seret file ke sini (maks 2MB)"}
                 </label>
                 <input
@@ -301,8 +283,8 @@ const EditDisposisi = () => {
               disabled={!isChanged()}
               className={`mt-4 py-2 rounded-md ${
                 isChanged()
-                  ? "bg-[#34542C] hover:bg-[#34542C] text-white font-semibold"
-                  : "bg-[#34542C] opacity-70 text-gray-500 cursor-not-allowed"
+                  ? "bg-green-600 hover:bg-green-700 text-white"
+                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
               }`}
             >
               Perbarui Disposisi

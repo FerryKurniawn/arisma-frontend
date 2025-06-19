@@ -4,6 +4,7 @@ import Navigasi from "../Navigasi";
 import InputForm from "../../InputForm";
 import Logout from "../../Logout";
 import UpdateAlert from "../../UpdateAlert";
+import { supabase } from "../../../supabaseClient"; // Import Supabase client
 
 const EditSuratKeluar = () => {
   const navigate = useNavigate();
@@ -25,32 +26,38 @@ const EditSuratKeluar = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`
-        );
-        if (!response.ok) throw new Error("Gagal mengambil data surat keluar");
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratKeluar")
+          .select("*")
+          .eq("id", id)
+          .single();
 
-        setNoSurat(data.noSurat);
-        setNoBerkas(data.noBerkas);
-        setAlamatPenerima(data.alamatPenerima);
-        setTanggalKeluar(data.tanggalKeluar.slice(0, 10));
-        setPerihal(data.perihal);
-        setNoPetunjuk(data.noPetunjuk);
-        setNoPaket(data.noPaket);
+        if (error) throw error;
+
+        setNoSurat(data.noSurat || "");
+        setNoBerkas(data.noBerkas || "");
+        setAlamatPenerima(data.alamatPenerima || "");
+        setTanggalKeluar(
+          data.tanggalKeluar ? data.tanggalKeluar.slice(0, 10) : ""
+        );
+        setPerihal(data.perihal || "");
+        setNoPetunjuk(data.noPetunjuk || "");
+        setNoPaket(data.noPaket || "");
 
         setOriginalData({
-          noSurat: data.noSurat,
-          noBerkas: data.noBerkas,
-          alamatPenerima: data.alamatPenerima,
-          tanggalKeluar: data.tanggalKeluar.slice(0, 10),
-          perihal: data.perihal,
-          noPetunjuk: data.noPetunjuk,
-          noPaket: data.noPaket,
-          fileUrl: data.fileUrl,
+          noSurat: data.noSurat || "",
+          noBerkas: data.noBerkas || "",
+          alamatPenerima: data.alamatPenerima || "",
+          tanggalKeluar: data.tanggalKeluar
+            ? data.tanggalKeluar.slice(0, 10)
+            : "",
+          perihal: data.perihal || "",
+          noPetunjuk: data.noPetunjuk || "",
+          noPaket: data.noPaket || "",
+          fileUrl: data.fileUrl || "",
         });
       } catch (error) {
-        console.error("Error fetching surat keluar:", error);
+        console.error("Error fetching surat keluar:", error.message);
       }
     };
 
@@ -113,32 +120,42 @@ const EditSuratKeluar = () => {
     e.preventDefault();
 
     try {
-      const formData = new FormData();
-      formData.append("noSurat", noSurat);
-      formData.append("noBerkas", noBerkas);
-      formData.append("alamatPenerima", alamatPenerima);
-      formData.append("tanggalKeluar", tanggalKeluar);
-      formData.append("perihal", perihal);
-      formData.append("noPetunjuk", noPetunjuk);
-      formData.append("noPaket", noPaket);
-      if (file) formData.append("fileUrl", file);
+      const updatedData = {
+        noSurat,
+        noBerkas,
+        alamatPenerima,
+        tanggalKeluar,
+        perihal,
+        noPetunjuk,
+        noPaket,
+      };
 
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`,
-        {
-          method: "PUT",
-          body: formData,
-        }
-      );
+      if (file) {
+        // Proses upload file jika ada file baru
+        const { data: fileData, error: fileError } = await supabase.storage
+          .from("surat-keluar")
+          .upload(`file_${Date.now()}`, file);
 
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        alert("Terjadi kesalahan saat mengupdate Surat Keluar.");
+        if (fileError) throw fileError;
+
+        const fileUrl = supabase.storage
+          .from("surat-keluar")
+          .getPublicUrl(fileData.path).publicURL;
+
+        updatedData.fileUrl = fileUrl;
       }
+
+      const { error } = await supabase
+        .from("SuratKeluar")
+        .update(updatedData)
+        .eq("id", id);
+
+      if (error) throw error;
+
+      setShowSuccess(true);
     } catch (error) {
-      console.error("Error updating Surat Keluar:", error);
-      alert("Terjadi kesalahan saat menghubungi server.");
+      console.error("Error updating Surat Keluar:", error.message);
+      alert("Terjadi kesalahan saat mengupdate data.");
     }
   };
 

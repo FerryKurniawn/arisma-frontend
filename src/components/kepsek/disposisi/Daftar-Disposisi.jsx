@@ -3,6 +3,7 @@ import Navigasi from "../Kepsekvigasi";
 import Logout from "../../Logout";
 import { useNavigate } from "react-router-dom";
 import Delete from "../../admin-tu/Delete";
+import { supabase } from "../../../supabaseClient";
 
 const DaftarDisposisi = () => {
   const navigate = useNavigate();
@@ -20,20 +21,26 @@ const DaftarDisposisi = () => {
     );
   };
 
-  const fetchData = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/surat-masuk`)
-      .then((res) => res.json())
-      .then((data) => {
-        const validData = data.filter(isDataValid); // Hanya surat dengan tenggatWaktu
-        setDataSurat(validData);
-        setFilteredSurat(validData);
-      })
-      .catch((err) => console.error("Gagal fetch data surat:", err.message));
+  const fetchData = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("SuratMasuk")
+        .select("*")
+        .order("createdAt", { ascending: false });
+
+      if (error) throw error;
+
+      const validData = data.filter(isDataValid);
+      setDataSurat(validData);
+      setFilteredSurat(validData);
+    } catch (err) {
+      console.error("Gagal fetch data surat:", err.message);
+    }
   };
 
   useEffect(() => {
     fetchData();
-  }, []);
+  });
 
   const handleSearch = () => {
     const filtered = dataSurat.filter((surat) => {
@@ -56,19 +63,16 @@ const DaftarDisposisi = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (res.ok) {
-        fetchData();
-      } else {
+      const { error } = await supabase.from("SuratMasuk").delete().eq("id", id);
+
+      if (error) {
+        console.error("Error saat hapus surat:", error.message);
         alert("Gagal menghapus surat.");
+      } else {
+        fetchData();
       }
     } catch (err) {
-      console.error("Error saat hapus surat:", err);
+      console.error("Error saat hapus surat:", err.message);
       alert("Terjadi kesalahan.");
     } finally {
       setShowDeleteModal(false);
@@ -189,7 +193,6 @@ const DaftarDisposisi = () => {
                           : surat.sifatSurat}
                       </td>
                       <td className="p-3">{surat.disposisikanKe || "-"}</td>
-
                       <td className="p-3 max-w-[200px] truncate">
                         {surat.isiDisposisi || "-"}
                       </td>

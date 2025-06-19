@@ -1,9 +1,10 @@
-// RekapSuratKeluar.js
 import React, { useState, useEffect } from "react";
 import Navigasi from "../Navigasi";
 import Logout from "../../Logout";
 import Delete from "../Delete";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../../supabaseClient"; // Import Supabase client
+
 const RekapSuratKeluar = () => {
   const navigate = useNavigate();
   const [dataSurat, setDataSurat] = useState([]);
@@ -12,16 +13,21 @@ const RekapSuratKeluar = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
-  const fetchSuratKeluar = () => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/surat-keluar/`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDataSurat(data);
-        setFilteredSurat(data);
-      })
-      .catch((err) =>
-        console.error("Gagal fetch data surat keluar:", err.message)
-      );
+  // Fetch data dari Supabase (dengan order DESC berdasarkan created_at)
+  const fetchSuratKeluar = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("SuratKeluar")
+        .select("*")
+        .order("createdAt", { ascending: false });
+
+      if (error) throw error;
+
+      setDataSurat(data);
+      setFilteredSurat(data);
+    } catch (error) {
+      console.error("Gagal fetch data surat keluar:", error.message);
+    }
   };
 
   useEffect(() => {
@@ -32,13 +38,13 @@ const RekapSuratKeluar = () => {
     const filtered = dataSurat.filter((surat) => {
       const search = searchTerm.toLowerCase();
       return (
-        surat.noSurat.toLowerCase().includes(search) ||
-        surat.noBerkas.toLowerCase().includes(search) ||
-        surat.alamatPenerima.toLowerCase().includes(search) ||
-        surat.tanggalKeluar.toLowerCase().includes(search) ||
-        surat.perihal.toLowerCase().includes(search) ||
-        surat.noPetunjuk.toLowerCase().includes(search) ||
-        surat.noPaket.toLowerCase().includes(search)
+        surat.noSurat?.toLowerCase().includes(search) ||
+        surat.noBerkas?.toLowerCase().includes(search) ||
+        surat.alamatPenerima?.toLowerCase().includes(search) ||
+        surat.tanggalKeluar?.toLowerCase().includes(search) ||
+        surat.perihal?.toLowerCase().includes(search) ||
+        surat.noPetunjuk?.toLowerCase().includes(search) ||
+        surat.noPaket?.toLowerCase().includes(search)
       );
     });
 
@@ -47,19 +53,16 @@ const RekapSuratKeluar = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`,
-        {
-          method: "DELETE",
-        }
-      );
-      if (res.ok) {
-        fetchSuratKeluar();
-      } else {
-        alert("Gagal menghapus surat.");
-      }
-    } catch (err) {
-      console.error("Error saat hapus surat:", err);
+      const { error } = await supabase
+        .from("SuratKeluar")
+        .delete()
+        .eq("id", id);
+
+      if (error) throw error;
+
+      fetchSuratKeluar();
+    } catch (error) {
+      console.error("Error saat hapus surat:", error.message);
       alert("Terjadi kesalahan.");
     } finally {
       setShowDeleteModal(false);
@@ -99,7 +102,7 @@ const RekapSuratKeluar = () => {
                   className="w-full border rounded-md py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
                 <div className="absolute right-3 top-2.5 text-gray-400">
-                  <img src="/search.png" width="15px" />
+                  <img src="/search.png" width="15px" alt="search" />
                 </div>
               </div>
               <button
@@ -157,16 +160,17 @@ const RekapSuratKeluar = () => {
                         {surat.alamatPenerima}
                       </td>
                       <td className="p-3">
-                        {new Date(surat.tanggalKeluar).toLocaleDateString(
-                          "id-ID",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }
-                        )}
+                        {surat.tanggalKeluar
+                          ? new Date(surat.tanggalKeluar).toLocaleDateString(
+                              "id-ID",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )
+                          : "-"}
                       </td>
-
                       <td className="p-3">{surat.perihal}</td>
                       <td className="p-3">{surat.noPetunjuk}</td>
                       <td className="p-3">{surat.noPaket}</td>

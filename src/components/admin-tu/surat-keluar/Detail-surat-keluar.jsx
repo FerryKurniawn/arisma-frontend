@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Navigasi";
 import Logout from "../../Logout";
+import { supabase } from "../../../supabaseClient"; // Import Supabase client
 
 const DetailSuratKeluar = () => {
   const navigate = useNavigate();
@@ -13,16 +14,16 @@ const DetailSuratKeluar = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-keluar/${id}`
-        );
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data surat keluar");
-        }
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratKeluar")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
         setSurat(data);
       } catch (error) {
-        console.error("Error fetching surat keluar:", error);
+        console.error("Error fetching surat keluar:", error.message);
       } finally {
         setLoading(false);
       }
@@ -73,7 +74,9 @@ const DetailSuratKeluar = () => {
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Tanggal Keluar</h3>
                 <p className="col-span-2">
-                  {surat.tanggalKeluar?.slice(0, 10) ?? "null"}
+                  {surat.tanggalKeluar
+                    ? surat.tanggalKeluar.slice(0, 10)
+                    : "null"}
                 </p>
               </div>
               <div className="mb-4 grid grid-cols-3 gap-4">

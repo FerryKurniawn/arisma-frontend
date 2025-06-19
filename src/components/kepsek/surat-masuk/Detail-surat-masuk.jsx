@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Kepsekvigasi";
 import Logout from "../../Logout";
 import SentAlert from "../../SentAlert";
+import { supabase } from "../../../supabaseClient";
 
 const DetailSuratMasuk = () => {
   const navigate = useNavigate();
@@ -39,10 +40,14 @@ const DetailSuratMasuk = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
-        );
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratMasuk")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (error) throw error;
+
         setSurat({
           noSurat: data.noSurat,
           perihal: data.perihal,
@@ -55,19 +60,22 @@ const DetailSuratMasuk = () => {
           tenggatWaktu: data.tenggatWaktu?.split("T")[0] || "",
         });
       } catch (error) {
-        console.error("Error fetching surat masuk:", error);
+        console.error("Error fetching surat masuk:", error.message);
       }
     };
 
     const fetchAdmins = async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/users?role=admin`
-        );
-        const data = await res.json();
+        const { data, error } = await supabase
+          .from("User")
+          .select("id, username")
+          .eq("role", "ADMIN");
+
+        if (error) throw error;
+
         setAdminList(data);
       } catch (error) {
-        console.error("Gagal mengambil data admin:", error);
+        console.error("Gagal mengambil data admin:", error.message);
       }
     };
 
@@ -89,28 +97,23 @@ const DetailSuratMasuk = () => {
     }
 
     try {
-      const res = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            disposisikanKe: surat.disposisikanKe,
-            isiDisposisi: surat.isiDisposisi,
-            tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(),
-          }),
-        }
-      );
+      const { error } = await supabase
+        .from("SuratMasuk")
+        .update({
+          disposisikanKe: surat.disposisikanKe,
+          isiDisposisi: surat.isiDisposisi,
+          tenggatWaktu: new Date(surat.tenggatWaktu).toISOString(),
+        })
+        .eq("id", id);
 
-      if (res.ok) {
-        setShowSuccess(true);
-      } else {
+      if (error) {
+        console.error("Error updating surat masuk:", error.message);
         alert("Gagal memperbarui surat disposisi.");
+      } else {
+        setShowSuccess(true);
       }
     } catch (error) {
-      console.error("Error submitting form:", error);
+      console.error("Error submitting form:", error.message);
       alert("Terjadi kesalahan.");
     }
   };
@@ -143,45 +146,63 @@ const DetailSuratMasuk = () => {
             />
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-3xl">
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              <h3 className="font-semibold">No. Surat</h3>
-              <p className="col-span-2">{surat.noSurat}</p>
-            </div>
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              <h3 className="font-semibold">Perihal</h3>
-              <p className="col-span-2">{surat.perihal}</p>
-            </div>
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              <h3 className="font-semibold">Alamat Pengirim</h3>
-              <p className="col-span-2">{surat.alamatPengirim}</p>
-            </div>
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              <h3 className="font-semibold">Tanggal Terima</h3>
-              <p className="col-span-2">{surat.tanggalTerima}</p>
-            </div>
-            <div className="mb-4 grid grid-cols-3 gap-4">
-              <h3 className="font-semibold">Sifat Surat</h3>
-              <p className="col-span-2">
-                {surat.sifatSurat === "SangatSegera"
-                  ? "Sangat Segera"
-                  : surat.sifatSurat}
-              </p>
-            </div>
-            {surat.fileUrl && (
+          {surat ? (
+            <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-3xl">
               <div className="mb-4 grid grid-cols-3 gap-4">
-                <h3 className="font-semibold">File Lampiran</h3>
-                <a
-                  href={surat.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="col-span-2 text-blue-500 underline"
-                >
-                  Lihat file
-                </a>
+                <h3 className="font-semibold">No. Surat</h3>
+                <p>{surat.noSurat}</p>
               </div>
-            )}
-          </div>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">Perihal</h3>
+                <p>{surat.perihal}</p>
+              </div>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">Alamat Pengirim</h3>
+                <p>{surat.alamatPengirim}</p>
+              </div>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">Tanggal Terima</h3>
+                <p>{surat.tanggalTerima?.slice(0, 10)}</p>
+              </div>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">Sifat Surat</h3>
+                <p>
+                  {surat.sifatSurat === "SangatSegera"
+                    ? "Sangat Segera"
+                    : surat.sifatSurat}
+                </p>
+              </div>
+              <div className="mb-4 grid grid-cols-3 gap-4">
+                <h3 className="font-semibold">File Surat</h3>
+                <div className="col-span-2">
+                  {surat.fileUrl ? (
+                    surat.fileUrl.endsWith(".pdf") ? (
+                      <iframe
+                        src={surat.fileUrl}
+                        title="File Surat"
+                        width="100%"
+                        height="500px"
+                        className="border rounded"
+                      ></iframe>
+                    ) : (
+                      <a
+                        href={surat.fileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 underline"
+                      >
+                        Lihat File
+                      </a>
+                    )
+                  ) : (
+                    <p className="text-gray-500">Tidak ada file terlampir</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p>Loading...</p>
+          )}
 
           <h2 className="text-2xl font-bold mb-4 mt-4">Form Disposisi</h2>
           <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-3xl mt-6">

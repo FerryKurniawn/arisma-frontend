@@ -1,12 +1,10 @@
-// src/components/ProtectedRoute.js
 import React from "react";
 import { Navigate } from "react-router-dom";
 
-export default function ProtectedRoute({ children, allowedRoles }) {
-  const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("user")); // Simpan user saat login
+const ProtectedRoute = ({ allowedRoles, children }) => {
+  const user = JSON.parse(localStorage.getItem("user"));
 
-  if (!token || !user) {
+  if (!user) {
     return <Navigate to="/" replace />;
   }
 
@@ -15,4 +13,6 @@ export default function ProtectedRoute({ children, allowedRoles }) {
   }
 
   return children;
-}
+};
+
+export default ProtectedRoute;

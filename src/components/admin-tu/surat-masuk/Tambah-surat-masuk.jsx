@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Navigasi from "../Navigasi";
 import Logout from "../../Logout";
 import { useNavigate } from "react-router-dom";
-
+import { supabase } from "../../../supabaseClient";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
 import AddAlert from "../../AddAlert";
 
 const TambahSuratMasuk = () => {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
 
   const [file, setFile] = useState(null);
   const [noSurat, setNoSurat] = useState("");
@@ -54,33 +55,45 @@ const TambahSuratMasuk = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("noSurat", noSurat);
-    formData.append("perihal", perihal);
-    formData.append("alamatPengirim", alamatPengirim);
-    formData.append("tanggalTerima", format(tanggalTerima, "yyyy-MM-dd"));
-    formData.append("sifatSurat", sifatSurat);
+    let fileUrl = null;
+
     if (file) {
-      formData.append("fileUrl", file);
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+
+      const { error } = await supabase.storage
+        .from("surat-masuk") // pastikan bucket sesuai
+        .upload(fileName, file);
+
+      if (error) {
+        console.error("Gagal upload file:", error.message);
+        setErrorMessage("Gagal mengunggah file.");
+        return;
+      }
+
+      const { publicUrl } = supabase.storage
+        .from("surat-masuk")
+        .getPublicUrl(fileName).data;
+
+      fileUrl = publicUrl;
     }
 
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-masuk/`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+    const { error: insertError } = await supabase.from("SuratMasuk").insert([
+      {
+        noSurat: noSurat,
+        perihal: perihal,
+        alamatPengirim: alamatPengirim,
+        tanggalTerima: format(tanggalTerima, "yyyy-MM-dd"),
+        sifatSurat: sifatSurat,
+        fileUrl: fileUrl,
+      },
+    ]);
 
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        alert("Gagal menambahkan surat.");
-      }
-    } catch (error) {
-      alert("Terjadi kesalahan saat menghubungi server.");
-      console.error("Error:", error);
+    if (insertError) {
+      console.error("Gagal menyimpan data:", insertError.message);
+      alert("Gagal menambahkan surat.");
+    } else {
+      setShowSuccess(true);
     }
   };
 
@@ -103,9 +116,7 @@ const TambahSuratMasuk = () => {
                 alt="back"
                 width="20px"
                 className="mt-5 cursor-pointer"
-                onClick={() => {
-                  navigate("/admin/rekap-surat-masuk");
-                }}
+                onClick={() => navigate("/admin/rekap-surat-masuk")}
               />
             </div>
           </div>
@@ -179,9 +190,11 @@ const TambahSuratMasuk = () => {
                 </select>
               </div>
 
+              {/* Bagian Upload File */}
               <div className="flex items-center gap-4">
                 <label className="font-medium w-64">Unggah File</label>
-                <div
+                <label
+                  htmlFor="fileInput"
                   onDragOver={handleDragOver}
                   onDragLeave={handleDragLeave}
                   onDrop={handleDrop}
@@ -191,23 +204,22 @@ const TambahSuratMasuk = () => {
                       : "border border-gray-300"
                   }`}
                 >
-                  <label htmlFor="fileInput" className="block cursor-pointer">
-                    {file
-                      ? file.name
-                      : "Pilih file atau seret ke sini (max 2MB)"}
-                  </label>
-                  <input
-                    type="file"
-                    id="fileInput"
-                    className="hidden"
-                    onChange={handleFileChange}
-                    accept=".pdf,.doc,.docx,.jpg,.png"
-                  />
-                </div>
+                  {file ? file.name : "Pilih file atau seret ke sini (max 2MB)"}
+                </label>
+                <input
+                  type="file"
+                  id="fileInput"
+                  ref={fileInputRef}
+                  className="hidden"
+                  onChange={handleFileChange}
+                  accept=".pdf,.doc,.docx,.jpg,.png"
+                />
               </div>
+
               {errorMessage && (
                 <div className="mt-2 text-sm text-red-500">{errorMessage}</div>
               )}
+
               <button
                 type="submit"
                 disabled={
@@ -216,21 +228,18 @@ const TambahSuratMasuk = () => {
                   !alamatPengirim ||
                   !tanggalTerima ||
                   !sifatSurat ||
-                  // !file ||
                   errorMessage
                 }
-                className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200
-    ${
-      !noSurat ||
-      !perihal ||
-      !alamatPengirim ||
-      !tanggalTerima ||
-      !sifatSurat ||
-      // !file ||
-      errorMessage
-        ? "bg-gray-300 cursor-not-allowed"
-        : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
-    }`}
+                className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200 ${
+                  !noSurat ||
+                  !perihal ||
+                  !alamatPengirim ||
+                  !tanggalTerima ||
+                  !sifatSurat ||
+                  errorMessage
+                    ? "bg-gray-300 cursor-not-allowed"
+                    : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
+                }`}
               >
                 Tambah
               </button>

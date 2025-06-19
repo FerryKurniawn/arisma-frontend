@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import Navigasi from "../Kepsekvigasi";
 import { useNavigate } from "react-router-dom";
 import Logout from "../../Logout";
+import { supabase } from "../../../supabaseClient"; // sudah pakai supabaseClient.js kamu
 
 const SuratMasuk = () => {
   const [suratMasuk, setSuratMasuk] = useState([]);
@@ -12,10 +13,15 @@ const SuratMasuk = () => {
   useEffect(() => {
     const fetchSuratMasuk = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk`
-        );
-        const data = await response.json();
+        const { data, error } = await supabase
+          .from("SuratMasuk") // sesuaikan dengan nama tabel di Supabase kamu
+          .select("*")
+          .order("createdAt", { ascending: false });
+
+        if (error) {
+          console.error("Error fetching surat masuk:", error);
+          return;
+        }
 
         if (Array.isArray(data)) {
           setSuratMasuk(data);
@@ -24,7 +30,7 @@ const SuratMasuk = () => {
           console.error("Data bukan array:", data);
         }
       } catch (error) {
-        console.error("Error fetching surat masuk:", error);
+        console.error("Unexpected error:", error);
       }
     };
 
@@ -84,12 +90,17 @@ const SuratMasuk = () => {
                   className="w-full border rounded-md py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-gray-300"
                 />
                 <div className="absolute right-3 top-2.5 text-gray-400">
-                  <img src="/search.png" width="15px" alt="search" />
+                  <img src="/search.png" width="15px" alt="Search" />
                 </div>
               </div>
               <button
-                className="bg-gray-300 hover:bg-gray-400 px-6 py-2 text-sm rounded-md"
+                className={`px-6 py-2 text-sm rounded-md text-white transition-colors duration-200 ${
+                  searchTerm.trim()
+                    ? "bg-[#34542C] hover:bg-gray-600"
+                    : "bg-gray-300 cursor-not-allowed"
+                }`}
                 onClick={handleSearch}
+                disabled={!searchTerm.trim()}
               >
                 Cari
               </button>
@@ -140,16 +151,17 @@ const SuratMasuk = () => {
                         {surat.alamatPengirim || "-"}
                       </td>
                       <td className="p-3">
-                        {new Date(surat.tanggalTerima).toLocaleDateString(
-                          "id-ID",
-                          {
-                            day: "2-digit",
-                            month: "2-digit",
-                            year: "numeric",
-                          }
-                        )}
+                        {surat.tanggalTerima
+                          ? new Date(surat.tanggalTerima).toLocaleDateString(
+                              "id-ID",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )
+                          : "-"}
                       </td>
-
                       <td className="p-3">
                         {surat.sifatSurat === "SangatSegera"
                           ? "Sangat Segera"

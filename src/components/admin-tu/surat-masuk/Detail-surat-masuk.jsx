@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigasi from "../Navigasi";
 import Logout from "../../Logout";
+import { supabase } from "../../../supabaseClient"; // Pastikan path sesuai
 
 const Detailsuratmasuk = () => {
   const navigate = useNavigate();
@@ -12,16 +13,19 @@ const Detailsuratmasuk = () => {
   useEffect(() => {
     const fetchSurat = async () => {
       try {
-        const response = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/surat-masuk/${id}`
-        );
-        if (!response.ok) {
-          throw new Error("Gagal mengambil data surat Masuk");
+        const { data, error } = await supabase
+          .from("SuratMasuk") // Pastikan nama tabel di Supabase benar
+          .select("*")
+          .eq("id", id)
+          .single(); // Mengambil hanya satu data
+
+        if (error) {
+          throw error;
         }
-        const data = await response.json();
+
         setSurat(data);
       } catch (error) {
-        console.error("Error fetching surat Masuk:", error);
+        console.error("Error fetching surat Masuk:", error.message);
       }
     };
 
@@ -72,7 +76,7 @@ const Detailsuratmasuk = () => {
               <div className="mb-4 grid grid-cols-3 gap-4">
                 <h3 className="font-semibold">Sifat Surat</h3>
                 <p>
-                  {surat.sifatSurat == "SangatSegera"
+                  {surat.sifatSurat === "SangatSegera"
                     ? "Sangat Segera"
                     : surat.sifatSurat}
                 </p>

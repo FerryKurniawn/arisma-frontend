@@ -5,6 +5,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Logout from "../../Logout";
 import AddAlert from "../../AddAlert";
 import { format } from "date-fns";
+import { supabase } from "../../../supabaseClient";
 
 const TambahSuratKeluar = () => {
   const navigate = useNavigate();
@@ -55,35 +56,52 @@ const TambahSuratKeluar = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const formData = new FormData();
-    formData.append("noSurat", noSurat);
-    formData.append("noBerkas", noBerkas);
-    formData.append("alamatPenerima", alamatPenerima);
-    formData.append("tanggalKeluar", format(tanggalKeluar, "yyyy-MM-dd"));
-    formData.append("perihal", perihal);
-    formData.append("noPetunjuk", noPetunjuk);
-    formData.append("noPaket", noPaket);
-    if (file) {
-      formData.append("fileUrl", file);
-    }
+    let fileUrl = null;
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/api/surat-keluar/`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      // Upload file ke Supabase Storage jika ada file
+      if (file) {
+        const { data, error } = await supabase.storage
+          .from("surat-keluar")
+          .upload(`files/${Date.now()}_${file.name}`, file);
 
-      if (response.ok) {
-        setShowSuccess(true);
-      } else {
-        alert("Gagal menambahkan surat.");
+        if (error) {
+          console.error("File upload error:", error);
+          alert("Gagal mengunggah file.");
+          return;
+        }
+
+        const { data: publicUrlData } = supabase.storage
+          .from("surat-keluar")
+          .getPublicUrl(data.path);
+
+        fileUrl = publicUrlData.publicUrl;
       }
+
+      // Insert ke tabel SuratKeluar
+      const { error: insertError } = await supabase.from("SuratKeluar").insert([
+        {
+          noSurat: noSurat,
+          noBerkas: noBerkas,
+          alamatPenerima: alamatPenerima,
+          tanggalKeluar: format(new Date(tanggalKeluar), "yyyy-MM-dd"),
+          perihal: perihal,
+          noPetunjuk: noPetunjuk,
+          noPaket: noPaket,
+          fileUrl: fileUrl,
+        },
+      ]);
+
+      if (insertError) {
+        console.error("Insert error:", insertError);
+        alert("Gagal menambahkan surat.");
+        return;
+      }
+
+      setShowSuccess(true);
     } catch (error) {
+      console.error("Unexpected error:", error);
       alert("Terjadi kesalahan saat menghubungi server.");
-      console.error("Error:", error);
     }
   };
 
@@ -118,6 +136,7 @@ const TambahSuratKeluar = () => {
               className="flex flex-col gap-4 w-full max-w-4xl"
               onSubmit={handleSubmit}
             >
+              {/* Input Fields */}
               <div className="flex items-center gap-4">
                 <label className="font-medium w-64">No. Surat</label>
                 <input
@@ -241,23 +260,21 @@ const TambahSuratKeluar = () => {
                   !perihal ||
                   !noPetunjuk ||
                   !noPaket ||
-                  // !file ||
                   errorMessage
                 }
                 className={`self-start mt-4 py-2 px-6 rounded-md text-white transition-all duration-200
-    ${
-      !noSurat ||
-      !perihal ||
-      !alamatPenerima ||
-      !tanggalKeluar ||
-      !perihal ||
-      !noPetunjuk ||
-      !noPaket ||
-      // !file ||
-      errorMessage
-        ? "bg-gray-300 cursor-not-allowed"
-        : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
-    }`}
+                  ${
+                    !noSurat ||
+                    !perihal ||
+                    !alamatPenerima ||
+                    !tanggalKeluar ||
+                    !perihal ||
+                    !noPetunjuk ||
+                    !noPaket ||
+                    errorMessage
+                      ? "bg-gray-300 cursor-not-allowed"
+                      : "bg-[#34542C] hover:bg-green-900 cursor-pointer"
+                  }`}
               >
                 Tambah
               </button>
